@@ -1,4 +1,4 @@
-#include "monitor.hpp"
+#include "window/monitor.hpp"
 
 Monitor::Monitor() {
   m = glfwGetPrimaryMonitor();

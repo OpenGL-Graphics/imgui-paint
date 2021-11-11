@@ -1,8 +1,8 @@
 #include <iostream>
 #include <glad/glad.h>
 
-#include "dialog.hpp"
-#include "window.hpp"
+#include "window/window.hpp"
+#include "gui/dialog.hpp"
 
 int main() {
   // glfw window
@@ -24,7 +24,7 @@ int main() {
   }
 
   // initialize dialog with imgui
-  Dialog dialog(window, "Dialog title", "Dialog text");
+  Dialog dialog(window);
 
   // main loop
   while (!window.is_closed()) {
@@ -32,16 +32,12 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-
     // render imgui dialog
     dialog.render();
 
     // process events & show rendered buffer
     window.process_events();
     window.render();
-
-    // keyboard input (move camera, quit application)
-    // key_handler.on_keypress();
   }
 
   // destroy imgui

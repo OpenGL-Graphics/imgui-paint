@@ -1,7 +1,6 @@
 #include <iostream>
-#include <glm/gtc/matrix_transform.hpp>
 
-#include "window.hpp"
+#include "window/window.hpp"
 
 /* Create window & initilialize its OpenGL context */
 Window::Window(const std::string& title) {

@@ -23,7 +23,11 @@ add_library(imgui SHARED ${IMGUI_SRC})
 target_include_directories(imgui PUBLIC include/imgui include)
 
 # main executable
-file(GLOB SRC "src/*.cpp")
+file(GLOB SRC
+  "src/window/*.cpp"
+  "src/gui/*.cpp"
+  "src/main.cpp"
+)
 add_executable(main ${SRC})
 target_link_libraries(main
   glfw
