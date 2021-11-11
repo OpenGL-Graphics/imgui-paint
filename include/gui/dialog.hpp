@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "window/window.hpp"
+#include "window.hpp"
 
 class Dialog {
 public:

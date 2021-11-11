@@ -6,11 +6,8 @@ set(CMAKE_CXX_STANDARD 17)
 
 # autocomplete with YCM & debug with gdb
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_BUILD_TYPE Debug)
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
-
-# needed packages
-find_package(glfw3 REQUIRED)
+set(CMAKE_BUILD_TYPE Release)
+# set(CMAKE_BUILD_TYPE Debug)
 
 # glad shared library (opengl)
 add_library(glad SHARED src/glad/glad.c)
@@ -22,15 +19,18 @@ file(GLOB IMGUI_SRC "src/imgui/*.cpp")
 add_library(imgui SHARED ${IMGUI_SRC})
 target_include_directories(imgui PUBLIC include/imgui include)
 
+# glfw window library from submodule
+add_subdirectory(glfw-window)
+
 # main executable
 file(GLOB SRC
-  "src/window/*.cpp"
   "src/gui/*.cpp"
   "src/main.cpp"
 )
 add_executable(main ${SRC})
+target_include_directories(main PRIVATE glfw-window/include)
 target_link_libraries(main
-  glfw
+  glfw_window
   glad
   imgui
 )

@@ -1,3 +1,13 @@
+# How to get code
+Clone repo and its submodules:
+
+```console
+git clone git@github.com:h4k1m0u/imgui-example.git
+git submodule init
+git submodule update  # also needed to get new commits from submodule
+```
+
+
 # Imgui
 - Source and header files for imgui were copied directly from [imgui-repo] into this project.
 - Follow [imgui-example] to include imgui in an opengl/glsw project.
