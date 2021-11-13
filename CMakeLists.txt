@@ -19,8 +19,9 @@ file(GLOB IMGUI_SRC "src/imgui/*.cpp")
 add_library(imgui SHARED ${IMGUI_SRC})
 target_include_directories(imgui PUBLIC include/imgui include)
 
-# glfw window library from submodule
+# glfw window & texture libraries from submodule
 add_subdirectory(glfw-window)
+add_subdirectory(opengl-texture)
 
 # main executable
 file(GLOB SRC
@@ -28,9 +29,9 @@ file(GLOB SRC
   "src/main.cpp"
 )
 add_executable(main ${SRC})
-target_include_directories(main PRIVATE glfw-window/include)
 target_link_libraries(main
-  glfw_window
   glad
   imgui
+  glfw_window
+  opengl_texture
 )

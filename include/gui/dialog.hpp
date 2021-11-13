@@ -4,6 +4,7 @@
 #include <string>
 
 #include "window.hpp"
+#include "texture.hpp"
 
 class Dialog {
 public:
@@ -13,6 +14,9 @@ public:
 
 private:
   Window m_window;
+
+  /* opengl texture for showing image */
+  Texture2D m_texture;
 
   void render_components();
 };

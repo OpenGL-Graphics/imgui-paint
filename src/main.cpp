@@ -1,11 +1,11 @@
 #include <iostream>
-#include <glad/glad.h>
+#include "glad/glad.h"
 
 #include "gui/dialog.hpp"
 
 int main() {
   // glfw window
-  Window window("FPS game");
+  Window window("Image visualizer");
 
   if (window.is_null()) {
     std::cout << "Failed to create window or OpenGL context" << "\n";

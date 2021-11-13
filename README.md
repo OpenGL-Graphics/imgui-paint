@@ -2,9 +2,9 @@
 Clone repo and its submodules:
 
 ```console
-git clone git@github.com:h4k1m0u/imgui-example.git
-git submodule init
-git submodule update  # also needed to get new commits from submodule
+$ git clone git@github.com:h4k1m0u/imgui-example.git
+$ git submodule init
+$ git submodule update --init --recursive --remote  # also needed to get new commits from submodule
 ```
 
 
