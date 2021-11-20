@@ -5,6 +5,7 @@
 
 #include "window.hpp"
 #include "texture.hpp"
+#include "image.hpp"
 
 class Dialog {
 public:
@@ -14,6 +15,9 @@ public:
 
 private:
   Window m_window;
+
+  /* opened image to process */
+  Image m_image;
 
   /* opengl texture for showing image */
   Texture2D m_texture;

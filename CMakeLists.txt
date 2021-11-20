@@ -28,10 +28,7 @@ add_subdirectory(glfw-window)
 add_subdirectory(opengl-texture)
 
 # main executable
-file(GLOB SRC
-  "src/gui/*.cpp"
-  "src/main.cpp"
-)
+file(GLOB SRC "src/*.cpp")
 add_executable(main ${SRC})
 target_link_libraries(main
   glad

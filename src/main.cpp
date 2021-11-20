@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "glad/glad.h"
-#include "gui/dialog.hpp"
+#include "dialog.hpp"
 
 int main() {
   // glfw window

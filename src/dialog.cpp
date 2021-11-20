@@ -4,7 +4,9 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
-#include "gui/dialog.hpp"
+
+#include "dialog.hpp"
+#include "image_utils.hpp"
 
 /**
  * Dialog made with imgui
@@ -12,7 +14,8 @@
  */
 Dialog::Dialog(const Window& window):
   m_window(window),
-  m_texture(Image("../assets/grass_logo.png")) // notice how image is vertically-inverted
+  m_image("../assets/grass_logo.png"),
+  m_texture(m_image) // notice how image is vertically-inverted
 {
   // setup imgui context & glfw/opengl backends
   ImGui::CreateContext();
@@ -72,6 +75,7 @@ void Dialog::render_menu() {
   // static vars only init on 1st function call
   static bool open_image = false;
   static bool quit_app = false;
+  static bool to_gray = false;
 
   // menu buttons listeners
   if (open_image) {
@@ -79,7 +83,7 @@ void Dialog::render_menu() {
 
     // https://github.com/aiekick/ImGuiFileDialog#simple-dialog-
     // open file dialog
-    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileKey", "Choose file", ".png", ".");
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileKey", "Choose file", ".jpg,.png", "../assets");
     open_image = false;
   }
 
@@ -87,13 +91,23 @@ void Dialog::render_menu() {
   if (ImGuiFileDialog::Instance()->Display("ChooseFileKey")) {
     // get file path if ok
     if (ImGuiFileDialog::Instance()->IsOk()) {
+      // free previously opened image & open new one
       std::string path_image = ImGuiFileDialog::Instance()->GetFilePathName();
-      m_texture.set_image(Image(path_image));
+      m_image.free();
+      m_image = Image(path_image);
+      m_texture.set_image(m_image);
       std::cout << "path image: " << path_image << '\n';
     }
 
     // close file dialog
     ImGuiFileDialog::Instance()->Close();
+  }
+
+  // convert opened image to grayscale
+  if (to_gray) {
+    m_image = ImageUtils::to_gray(m_image);
+    m_texture.set_image(m_image);
+    to_gray = false;
   }
 
   if (quit_app) {
@@ -106,6 +120,11 @@ void Dialog::render_menu() {
     if (ImGui::BeginMenu("File")) {
       ImGui::MenuItem("Open", NULL, &open_image);
       ImGui::MenuItem("Quit", NULL, &quit_app);
+      ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Image")) {
+      ImGui::MenuItem("To gray", NULL, &to_gray);
       ImGui::EndMenu();
     }
 
