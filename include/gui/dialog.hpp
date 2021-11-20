@@ -19,6 +19,7 @@ private:
   Texture2D m_texture;
 
   void render_components();
+  void render_menu();
 };
 
 #endif // DIALOG_HPP

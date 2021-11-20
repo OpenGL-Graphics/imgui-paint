@@ -1,7 +1,10 @@
-#include <imgui.h>
-#include <imgui_impl_glfw.h>
-#include <imgui_impl_opengl3.h>
 #include <iostream>
+
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_opengl3.h"
+
+#include "ImGuiFileDialog/ImGuiFileDialog.h"
 
 #include "gui/dialog.hpp"
 
@@ -11,7 +14,7 @@
  */
 Dialog::Dialog(const Window& window):
   m_window(window),
-  m_texture(Image("image.jpg"))
+  m_texture(Image("../assets/grass_logo.png")) // notice how image is vertically-inverted
 {
   // setup imgui context & glfw/opengl backends
   ImGui::CreateContext();
@@ -41,19 +44,6 @@ void Dialog::render() {
  * Called in main loop
  */
 void Dialog::render_components() {
-  // static vars only init on 1st function call
-  static bool open_image = false;
-  static bool quit_app = false;
-
-  // menu buttons listeners
-  if (open_image) {
-    std::cout << "Menu item enabled!" << '\n';
-    open_image = false;
-  }
-  if (quit_app) {
-    m_window.close();
-  }
-
   // buttons return true when clicked
   /*
   if (ImGui::Button("Quit")) {
@@ -64,28 +54,64 @@ void Dialog::render_components() {
   ImGui::Text("<= Click this button to quit");
   */
   bool show_demo_window = true;
-  ImGui::ShowDemoWindow(&show_demo_window);
+  // ImGui::ShowDemoWindow(&show_demo_window);
 
   // show image from texture
   // double casting avoids `warning: cast to pointer from integer of different size` i.e. smaller
   m_texture.attach();
   ImGui::Image((void*)(intptr_t) m_texture.id, ImVec2(m_texture.width, m_texture.height));
 
+  // menu
+  render_menu();
+
+  // plot values
+  // float values[] = {0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f};
+  // ImGui::PlotLines("Plot", values, IM_ARRAYSIZE(values), 0, NULL, 0.0f, 1.0f, ImVec2(0, 200));
+}
+
+/* Render menu bar with its items & attach listeners to its items */
+void Dialog::render_menu() {
+  // static vars only init on 1st function call
+  static bool open_image = false;
+  static bool quit_app = false;
+
+  // menu buttons listeners
+  if (open_image) {
+    std::cout << "Open image menu item enabled!" << '\n';
+
+    // https://github.com/aiekick/ImGuiFileDialog#simple-dialog-
+    // open file dialog
+    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileKey", "Choose file", ".png", ".");
+    open_image = false;
+  }
+
+  // display file dialog
+  if (ImGuiFileDialog::Instance()->Display("ChooseFileKey")) {
+    // get file path if ok
+    if (ImGuiFileDialog::Instance()->IsOk()) {
+      std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
+      std::cout << "file path name: " << filePathName << '\n';
+    }
+
+    // close file dialog
+    ImGuiFileDialog::Instance()->Close();
+  }
+
+  if (quit_app) {
+    m_window.close();
+  }
+
   // menu items act like toggle buttons in imgui
   // bool var set/unset on every click
   if (ImGui::BeginMainMenuBar()) {
-    if (ImGui::BeginMenu("Menu")) {
-      ImGui::MenuItem("Open image", NULL, &open_image);
+    if (ImGui::BeginMenu("File")) {
+      ImGui::MenuItem("Open", NULL, &open_image);
       ImGui::MenuItem("Quit", NULL, &quit_app);
       ImGui::EndMenu();
     }
 
     ImGui::EndMainMenuBar();
   }
-
-  // plot values
-  // float values[] = {0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f};
-  // ImGui::PlotLines("Plot", values, IM_ARRAYSIZE(values), 0, NULL, 0.0f, 1.0f, ImVec2(0, 200));
 }
 
 /* Destroy imgui */

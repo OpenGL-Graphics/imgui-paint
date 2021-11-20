@@ -19,6 +19,10 @@ file(GLOB IMGUI_SRC "src/imgui/*.cpp")
 add_library(imgui SHARED ${IMGUI_SRC})
 target_include_directories(imgui PUBLIC include/imgui include)
 
+# filedialog extension for imgui
+add_library(file_dialog SHARED src/ImGuiFileDialog/ImGuiFileDialog.cpp)
+target_include_directories(file_dialog PUBLIC include/ImGuiFileDialog include/imgui)
+
 # glfw window & texture libraries from submodule
 add_subdirectory(glfw-window)
 add_subdirectory(opengl-texture)
@@ -34,4 +38,5 @@ target_link_libraries(main
   imgui
   glfw_window
   opengl_texture
+  file_dialog
 )

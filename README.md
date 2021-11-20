@@ -23,3 +23,9 @@ $ git submodule update --init --recursive --remote  # also needed to get new com
 [api]: https://pthom.github.io/imgui_manual_online/manual/imgui_manual.html
 [components-example]: https://github.com/ocornut/imgui/blob/master/imgui_demo.cpp
 [imgui-opengl-example]: https://github.com/ocornut/imgui/blob/master/examples/example_glfw_opengl3/main.cpp
+
+# ImGuiFileDialog
+Downloaded from [repo][imgui-filedialog-repo] and installed following the [tutorial][imgui-filedialog-tutorial] found on the same page.
+
+[imgui-filedialog-repo]: https://github.com/aiekick/ImGuiFileDialog
+[imgui-filedialog-tutorial]: https://github.com/aiekick/ImGuiFileDialog#structure
