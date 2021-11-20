@@ -1,6 +1,6 @@
 #include <iostream>
-#include "glad/glad.h"
 
+#include "glad/glad.h"
 #include "gui/dialog.hpp"
 
 int main() {

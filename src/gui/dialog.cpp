@@ -3,9 +3,7 @@
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
-
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
-
 #include "gui/dialog.hpp"
 
 /**
@@ -89,8 +87,9 @@ void Dialog::render_menu() {
   if (ImGuiFileDialog::Instance()->Display("ChooseFileKey")) {
     // get file path if ok
     if (ImGuiFileDialog::Instance()->IsOk()) {
-      std::string filePathName = ImGuiFileDialog::Instance()->GetFilePathName();
-      std::cout << "file path name: " << filePathName << '\n';
+      std::string path_image = ImGuiFileDialog::Instance()->GetFilePathName();
+      m_texture.set_image(Image(path_image));
+      std::cout << "path image: " << path_image << '\n';
     }
 
     // close file dialog
