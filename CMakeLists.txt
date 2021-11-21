@@ -23,9 +23,9 @@ target_include_directories(imgui PUBLIC include/imgui include)
 add_library(file_dialog SHARED src/ImGuiFileDialog/ImGuiFileDialog.cpp)
 target_include_directories(file_dialog PUBLIC include/ImGuiFileDialog include/imgui)
 
-# glfw window & texture libraries from submodule
+# glfw window & shader (with texture & glad) libraries from submodule
 add_subdirectory(glfw-window)
-add_subdirectory(opengl-texture)
+add_subdirectory(opengl-shader)
 
 # main executable
 file(GLOB SRC "src/*.cpp")
@@ -34,6 +34,6 @@ target_link_libraries(main
   glad
   imgui
   glfw_window
-  opengl_texture
+  opengl_shader
   file_dialog
 )
