@@ -1,4 +1,5 @@
 #include <iostream>
+#include <glm/gtc/matrix_transform.hpp>
 
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
@@ -7,6 +8,7 @@
 
 #include "dialog.hpp"
 #include "image_utils.hpp"
+#include "shader_exception.hpp"
 
 /**
  * Dialog made with imgui
@@ -14,9 +16,15 @@
  */
 Dialog::Dialog(const Window& window):
   m_window(window),
-  m_image("../assets/grass_logo.png"),
-  m_texture(m_image) // notice how image is vertically-inverted
+  m_image("./assets/images/grass_logo.png"),
+  m_texture(m_image), // TODO: notice how image is vertically-inverted
+  m_program("assets/shaders/basic.vert", "assets/shaders/basic.frag")
 {
+  // vertex or fragment shaders failed to compile
+  if (m_program.has_failed()) {
+    throw ShaderException();
+  }
+
   // setup imgui context & glfw/opengl backends
   ImGui::CreateContext();
   ImGui_ImplGlfw_InitForOpenGL(m_window.w, true);
@@ -31,13 +39,72 @@ void Dialog::render() {
   ImGui::NewFrame();
 
   // imgui window with widgets
+  ImGui::SetNextWindowSize({ 500.0f, 500.0f });
   ImGui::Begin("Dialog title");
   render_components();
-  ImGui::End();
+
+  // draw rect with cutom shader, then reset imgui render state (i.e. to default shader)
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  change_shader();
+  draw_list->AddRectFilled({0.0, 0.0}, {500.0, 500.0}, 0xFF0000FF);
+  draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 
   // render imgui window
+  ImGui::End();
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+}
+
+/**
+ * Change to custom shader to show 1-channel image in grayscale
+ * Otherwise image will appear in shades of red by default
+ * see: https://github.com/ocornut/imgui/issues/4174
+ * @param draw_list Low-level list of polygons
+ */
+void Dialog::change_shader() {
+  /*
+  struct CallbackData {
+    Program program;
+    Texture2D texture;
+
+    CallbackData(const Program& p, const Texture2D& t):
+      texture(t), program(p)
+    {}
+  };
+  CallbackData callback_data(m_program, m_texture);
+  */
+
+  auto callback_data = std::make_pair(&m_program, &m_texture);
+  // std::cout << "before: " << mprogra << '\n';
+
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  draw_list->AddCallback([](const ImDrawList* parent_list, const ImDrawCmd* cmd) {
+    // function pointer based on lambda fct cannot capture variables (passed as arg below)
+    /*
+    auto* callback_data = static_cast<std::pair<Program*, Texture2D*> *>(cmd->UserCallbackData);
+    Program* program = callback_data->first;
+    Texture2D* texture = callback_data->second;
+    std::cout << "texture: " << callback_data->second->id << '\n';
+    */
+    Program* program = static_cast<Program*>(cmd->UserCallbackData);
+
+    // projection matrix from viewport size (`GetDrawData()`: what to render)
+    ImDrawData* draw_data = ImGui::GetDrawData();
+    ImVec2 position = draw_data->DisplayPos;
+    ImVec2 size = draw_data->DisplaySize;
+    glm::mat4 projection2d = glm::ortho(0.0f, size.x, 0.0f, size.y);
+    // std::cout << "position: " << position.x << " " << position.y << '\n';
+    // std::cout << "size: " << size.x << " " << size.y << '\n';
+
+    // pass shaders uniforms
+    Uniforms uniforms = {
+      {"ProjMtx", projection2d},
+      // {"texture", *texture}
+    };
+    program->use();
+    program->set_uniforms(uniforms);
+  // }, &callback_data);
+  }, &m_program);
 }
 
 /**
@@ -53,9 +120,9 @@ void Dialog::render_components() {
 
   ImGui::SameLine();
   ImGui::Text("<= Click this button to quit");
-  */
   bool show_demo_window = true;
-  // ImGui::ShowDemoWindow(&show_demo_window);
+  ImGui::ShowDemoWindow(&show_demo_window);
+  */
 
   // show image from texture
   // double casting avoids `warning: cast to pointer from integer of different size` i.e. smaller
@@ -138,6 +205,7 @@ void Dialog::free() {
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 
-  // free opengl texture (image holder)
+  // free opengl texture (image holder) & shader used to display it
   m_texture.free();
+  m_program.free();
 }
