@@ -1,7 +1,6 @@
 #include <iostream>
 #include <glm/gtc/matrix_transform.hpp>
 
-#include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
@@ -38,15 +37,20 @@ void Dialog::render() {
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
 
-  // imgui window with widgets
+  // imgui window of specified size
   ImGui::SetNextWindowSize({ 500.0f, 500.0f });
   ImGui::Begin("Dialog title");
+
+  // draw rect with cutom shader, then
+  ImDrawList* draw_list = ImGui::GetWindowDrawList();
+  auto callback_data = std::make_pair(m_program, m_texture);
+  draw_list->AddCallback(draw_with_custom_shader, &callback_data);
+  // draw_list->AddRectFilled({0.0, 0.0}, {500.0, 500.0}, 0xFF0000FF);
+
+  // render menu & image
   render_components();
 
-  // draw rect with cutom shader, then reset imgui render state (i.e. to default shader)
-  ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  change_shader();
-  draw_list->AddRectFilled({0.0, 0.0}, {500.0, 500.0}, 0xFF0000FF);
+  // reset imgui render state (i.e. to default shader)
   draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 
   // render imgui window
@@ -58,53 +62,37 @@ void Dialog::render() {
 /**
  * Change to custom shader to show 1-channel image in grayscale
  * Otherwise image will appear in shades of red by default
+ * Shader & texture passed as 2nd arg to `ImDrawList->AddCallback()`
  * see: https://github.com/ocornut/imgui/issues/4174
  * @param draw_list Low-level list of polygons
  */
-void Dialog::change_shader() {
-  /*
-  struct CallbackData {
-    Program program;
-    Texture2D texture;
+void Dialog::draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd) {
+  // function pointer based on lambda fct cannot capture variables (passed as arg below)
+  auto* callback_data = static_cast<std::pair<Program, Texture2D> *>(cmd->UserCallbackData);
+  Program program = callback_data->first;
+  Texture2D texture = callback_data->second;
 
-    CallbackData(const Program& p, const Texture2D& t):
-      texture(t), program(p)
-    {}
+  // get viewport (window) size (`GetDrawData()`: what to render)
+  ImDrawData* draw_data = ImGui::GetDrawData();
+  ImVec2 position = draw_data->DisplayPos;
+  ImVec2 size = draw_data->DisplaySize;
+
+  // transformation matrixes from viewport & texture sizes (origin at lower-left corner)
+  glm::mat4 projection2d = glm::ortho(0.0f, size.x, 0.0f, size.y);
+  glm::mat4 view(1.0f);
+  glm::mat4 model(glm::translate(
+    glm::mat4(1.0f),
+    glm::vec3(0.0f, size.y - texture.height, 0.0f)
+  ));
+  glm::mat4 transformation = projection2d * view * model;
+
+  // pass uniforms to shaders
+  Uniforms uniforms = {
+    {"ProjMtx", transformation},
+    {"Texture", texture}
   };
-  CallbackData callback_data(m_program, m_texture);
-  */
-
-  auto callback_data = std::make_pair(&m_program, &m_texture);
-  // std::cout << "before: " << mprogra << '\n';
-
-  ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  draw_list->AddCallback([](const ImDrawList* parent_list, const ImDrawCmd* cmd) {
-    // function pointer based on lambda fct cannot capture variables (passed as arg below)
-    /*
-    auto* callback_data = static_cast<std::pair<Program*, Texture2D*> *>(cmd->UserCallbackData);
-    Program* program = callback_data->first;
-    Texture2D* texture = callback_data->second;
-    std::cout << "texture: " << callback_data->second->id << '\n';
-    */
-    Program* program = static_cast<Program*>(cmd->UserCallbackData);
-
-    // projection matrix from viewport size (`GetDrawData()`: what to render)
-    ImDrawData* draw_data = ImGui::GetDrawData();
-    ImVec2 position = draw_data->DisplayPos;
-    ImVec2 size = draw_data->DisplaySize;
-    glm::mat4 projection2d = glm::ortho(0.0f, size.x, 0.0f, size.y);
-    // std::cout << "position: " << position.x << " " << position.y << '\n';
-    // std::cout << "size: " << size.x << " " << size.y << '\n';
-
-    // pass shaders uniforms
-    Uniforms uniforms = {
-      {"ProjMtx", projection2d},
-      // {"texture", *texture}
-    };
-    program->use();
-    program->set_uniforms(uniforms);
-  // }, &callback_data);
-  }, &m_program);
+  program.use();
+  program.set_uniforms(uniforms);
 }
 
 /**

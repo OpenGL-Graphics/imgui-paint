@@ -3,6 +3,8 @@
 
 #include <string>
 
+#include "imgui.h"
+
 #include "window.hpp"
 #include "texture.hpp"
 #include "image.hpp"
@@ -30,7 +32,9 @@ private:
 
   void render_components();
   void render_menu();
-  void change_shader();
+
+  /* static methods can be passed as function pointers callbacks (no `this` argument) */
+  static void draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd);
 };
 
 #endif // DIALOG_HPP
