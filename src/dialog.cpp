@@ -15,7 +15,8 @@
  */
 Dialog::Dialog(const Window& window):
   m_window(window),
-  m_image("./assets/images/grass_logo.png"),
+  m_image("./assets/images/fruits.jpg"),
+  // m_image("./assets/images/grass_logo.png"),
   m_texture(m_image), // TODO: notice how image is vertically-inverted
   m_program("assets/shaders/basic.vert", "assets/shaders/basic.frag")
 {
@@ -37,24 +38,62 @@ void Dialog::render() {
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
 
-  // imgui window of specified size
-  ImGui::SetNextWindowSize({ 500.0f, 500.0f });
-  ImGui::Begin("Dialog title");
+  ///
+  // enable docking
+  ImGuiIO io = ImGui::GetIO(); // configures imgui
+  // io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+  ///
 
-  // draw rect with cutom shader, then
+  // main menu top toolbar
+  render_menu();
+
+  // draw rect in background
+  // main window's content size
+  ImVec2 size_display = io.DisplaySize;
+  m_size_content = { size_display.x, size_display.y - m_size_menu.y };
+  ImGui::GetForegroundDrawList()->AddRect({0, 0}, size_display, 0xFF0000FF);
+
+  // imgui window of specified size, anchored at (0, 0), & without padding
+  // origin at upper-left corner
+  ImGui::SetNextWindowPos({ 0.0f, m_size_menu.y });
+  ImGui::SetNextWindowSize(m_size_content);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+  bool p_open;
+  // ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
+  ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar;
+  ImGui::Begin("Dialog title", &p_open, window_flags);
+
+  // render image using custom shader (for grayscale) on drawlist associated with current frame
   ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  auto callback_data = std::make_pair(m_program, m_texture);
+  auto callback_data = std::make_tuple(m_program, m_texture);
   draw_list->AddCallback(draw_with_custom_shader, &callback_data);
-  // draw_list->AddRectFilled({0.0, 0.0}, {500.0, 500.0}, 0xFF0000FF);
+  render_image();
 
-  // render menu & image
-  render_components();
+  // draw_list->AddRectFilled({0, 0}, m_size_content, 0x0000FFFF);
+  // draw_list->AddRectFilled({0, 0}, {19, 19}, 0xFF0000FF);
 
   // reset imgui render state (i.e. to default shader)
   draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
 
   // render imgui window
+  ImGui::PopStyleVar(); // avoids assertion error (associated with padding above)
   ImGui::End();
+
+  ///
+  // docking with 2nd frame
+  /*
+  ImGui::SetNextWindowPos({ 0.0f, size_menu.y });
+  ImGui::Begin("Dialog title2");
+    if (ImGui::Button("Quit")) {
+      m_window.close();
+    }
+
+    ImGui::SameLine();
+    ImGui::Text("<= Click this button to quit");
+  ImGui::End();
+  */
+  ///
+
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
@@ -68,22 +107,22 @@ void Dialog::render() {
  */
 void Dialog::draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd) {
   // function pointer based on lambda fct cannot capture variables (passed as arg below)
-  auto* callback_data = static_cast<std::pair<Program, Texture2D> *>(cmd->UserCallbackData);
-  Program program = callback_data->first;
-  Texture2D texture = callback_data->second;
+  auto* callback_data = static_cast<std::tuple<Program, Texture2D> *>(cmd->UserCallbackData);
+  Program program = std::get<0>(*callback_data);
+  Texture2D texture = std::get<1>(*callback_data);
 
-  // get viewport (window) size (`GetDrawData()`: what to render)
+  // get current viewport size incl. menu (`GetDrawData()`: what to render)
   ImDrawData* draw_data = ImGui::GetDrawData();
-  ImVec2 position = draw_data->DisplayPos;
-  ImVec2 size = draw_data->DisplaySize;
+  ImVec2 size_viewport = draw_data->DisplaySize;
 
-  // transformation matrixes from viewport & texture sizes (origin at lower-left corner)
-  glm::mat4 projection2d = glm::ortho(0.0f, size.x, 0.0f, size.y);
+  // parameters to glm::ortho corresp. to screen bounds & position coords above are rel. to these bounds
+  // ortho mat inspired by: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_opengl2.cpp#L146
+  // originally viewport & image origins at lower-left corner, but bcos of ortho mat image will be inverted
+  // this ortho mat (with inv. bottom & top) allows image to stick to top-left corner of window
+  glm::vec2 position(0.0f, 0.0f);
+  glm::mat4 projection2d = glm::ortho(0.0f, size_viewport.x, size_viewport.y, 0.0f); // left, right, bottom, top
   glm::mat4 view(1.0f);
-  glm::mat4 model(glm::translate(
-    glm::mat4(1.0f),
-    glm::vec3(0.0f, size.y - texture.height, 0.0f)
-  ));
+  glm::mat4 model(1.0f); // position at window's origin (upper-left corner)
   glm::mat4 transformation = projection2d * view * model;
 
   // pass uniforms to shaders
@@ -95,37 +134,17 @@ void Dialog::draw_with_custom_shader(const ImDrawList* parent_list, const ImDraw
   program.set_uniforms(uniforms);
 }
 
-/**
- * Render gui components (e.g. buttons)
- * Called in main loop
- */
-void Dialog::render_components() {
-  // buttons return true when clicked
-  /*
-  if (ImGui::Button("Quit")) {
-    m_window.close();
-  }
-
-  ImGui::SameLine();
-  ImGui::Text("<= Click this button to quit");
-  bool show_demo_window = true;
-  ImGui::ShowDemoWindow(&show_demo_window);
-  */
-
-  // show image from texture
+/* Show image from texture */
+void Dialog::render_image() {
   // double casting avoids `warning: cast to pointer from integer of different size` i.e. smaller
   m_texture.attach();
   ImGui::Image((void*)(intptr_t) m_texture.id, ImVec2(m_texture.width, m_texture.height));
-
-  // menu
-  render_menu();
-
-  // plot values
-  // float values[] = {0.6f, 0.1f, 1.0f, 0.5f, 0.92f, 0.1f, 0.2f};
-  // ImGui::PlotLines("Plot", values, IM_ARRAYSIZE(values), 0, NULL, 0.0f, 1.0f, ImVec2(0, 200));
 }
 
-/* Render menu bar with its items & attach listeners to its items */
+/**
+ * Render menu bar with its items & attach listeners to its items
+ * Sets the size of menu drawn to place content windows below it
+ */
 void Dialog::render_menu() {
   // static vars only init on 1st function call
   static bool open_image = false;
@@ -183,6 +202,7 @@ void Dialog::render_menu() {
       ImGui::EndMenu();
     }
 
+    m_size_menu = ImGui::GetWindowSize();
     ImGui::EndMainMenuBar();
   }
 }

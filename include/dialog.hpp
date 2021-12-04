@@ -30,8 +30,12 @@ private:
    */
   Program m_program;
 
-  void render_components();
   void render_menu();
+  void render_image();
+
+  /* needed to position windows & content within them */
+  ImVec2 m_size_menu;
+  ImVec2 m_size_content;
 
   /* static methods can be passed as function pointers callbacks (no `this` argument) */
   static void draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd);
