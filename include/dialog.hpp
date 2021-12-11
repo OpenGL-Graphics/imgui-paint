@@ -25,10 +25,14 @@ private:
   /* opengl texture for showing image */
   Texture2D m_texture;
 
+  /* shaders programs to pick from accord. to effect applied to image */
+  std::unordered_map<std::string, Program> m_programs;
+
   /* Custom shader to show image in grayscale (otherwise 1-channel image shows in shades of red)
    * https://github.com/ocornut/imgui/issues/4748
+   * Using a reference would've changed map (m_programs) values when switching to grayscale/color
    */
-  Program m_program;
+  Program* m_program;
 
   void render_menu();
   void render_image();

@@ -9,19 +9,26 @@
 #include "image_utils.hpp"
 #include "shader_exception.hpp"
 
+
 /**
  * Dialog made with imgui
  * Inspired by: https://github.com/ocornut/imgui/blob/master/examples/example_glfw_opengl3/main.cpp
  */
 Dialog::Dialog(const Window& window):
   m_window(window),
-  m_image("./assets/images/fruits.jpg"),
-  // m_image("./assets/images/grass_logo.png"),
-  m_texture(m_image), // TODO: notice how image is vertically-inverted
-  m_program("assets/shaders/basic.vert", "assets/shaders/basic.frag")
+  m_image("./assets/images/grass_logo.png", false),
+  m_texture(m_image),
+
+  m_programs{
+    {"color", Program("assets/shaders/basic.vert", "assets/shaders/color.frag")},
+    {"grayscale", Program("assets/shaders/basic.vert", "assets/shaders/grayscale.frag")},
+    {"monochrome", Program("assets/shaders/basic.vert", "assets/shaders/monochrome.frag")},
+  },
+  // `unordered_map::operator[]()` requires map's value (i.e. Program) to have default constructor
+  m_program(&m_programs.at("color"))
 {
   // vertex or fragment shaders failed to compile
-  if (m_program.has_failed()) {
+  if (m_program->has_failed()) {
     throw ShaderException();
   }
 
@@ -107,8 +114,8 @@ void Dialog::render() {
  */
 void Dialog::draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd) {
   // function pointer based on lambda fct cannot capture variables (passed as arg below)
-  auto* callback_data = static_cast<std::tuple<Program, Texture2D> *>(cmd->UserCallbackData);
-  Program program = std::get<0>(*callback_data);
+  auto* callback_data = static_cast<std::tuple<Program*, Texture2D> *>(cmd->UserCallbackData);
+  Program program = *std::get<0>(*callback_data);
   Texture2D texture = std::get<1>(*callback_data);
 
   // get current viewport size incl. menu (`GetDrawData()`: what to render)
@@ -119,7 +126,6 @@ void Dialog::draw_with_custom_shader(const ImDrawList* parent_list, const ImDraw
   // ortho mat inspired by: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_opengl2.cpp#L146
   // originally viewport & image origins at lower-left corner, but bcos of ortho mat image will be inverted
   // this ortho mat (with inv. bottom & top) allows image to stick to top-left corner of window
-  glm::vec2 position(0.0f, 0.0f);
   glm::mat4 projection2d = glm::ortho(0.0f, size_viewport.x, size_viewport.y, 0.0f); // left, right, bottom, top
   glm::mat4 view(1.0f);
   glm::mat4 model(1.0f); // position at window's origin (upper-left corner)
@@ -127,8 +133,8 @@ void Dialog::draw_with_custom_shader(const ImDrawList* parent_list, const ImDraw
 
   // pass uniforms to shaders
   Uniforms uniforms = {
-    {"ProjMtx", transformation},
-    {"Texture", texture}
+    {"transformation", transformation},
+    {"texture2d", texture}
   };
   program.use();
   program.set_uniforms(uniforms);
@@ -150,6 +156,7 @@ void Dialog::render_menu() {
   static bool open_image = false;
   static bool quit_app = false;
   static bool to_gray = false;
+  static bool to_color = false;
 
   // menu buttons listeners
   if (open_image) {
@@ -168,7 +175,7 @@ void Dialog::render_menu() {
       // free previously opened image & open new one
       std::string path_image = ImGuiFileDialog::Instance()->GetFilePathName();
       m_image.free();
-      m_image = Image(path_image);
+      m_image = Image(path_image, false);
       m_texture.set_image(m_image);
       std::cout << "path image: " << path_image << '\n';
     }
@@ -177,11 +184,19 @@ void Dialog::render_menu() {
     ImGuiFileDialog::Instance()->Close();
   }
 
-  // convert opened image to grayscale
+  // update shader to show image in grayscale
   if (to_gray) {
-    m_image = ImageUtils::to_gray(m_image);
-    m_texture.set_image(m_image);
+    // convert opened image to grayscale
+    // m_image = ImageUtils::to_gray(m_image);
+    // m_texture.set_image(m_image);
+    m_program = &m_programs.at("grayscale");
     to_gray = false;
+  }
+
+  // update to shader to show image in color
+  if (to_color) {
+    m_program = &m_programs.at("color");
+    to_color = false;
   }
 
   if (quit_app) {
@@ -199,6 +214,7 @@ void Dialog::render_menu() {
 
     if (ImGui::BeginMenu("Image")) {
       ImGui::MenuItem("To gray", NULL, &to_gray);
+      ImGui::MenuItem("To color", NULL, &to_color);
       ImGui::EndMenu();
     }
 
@@ -213,7 +229,9 @@ void Dialog::free() {
   ImGui_ImplGlfw_Shutdown();
   ImGui::DestroyContext();
 
-  // free opengl texture (image holder) & shader used to display it
+  // free opengl texture (image holder) & shaders programs used to display it
   m_texture.free();
-  m_program.free();
+  for (auto& pair: m_programs) {
+    pair.second.free();
+  }
 }
