@@ -154,22 +154,25 @@ void Dialog::render_image() {
 void Dialog::render_menu() {
   // static vars only init on 1st function call
   static bool open_image = false;
+  static bool save_image = false;
   static bool quit_app = false;
-  static bool to_gray = false;
-  static bool to_color = false;
+  static bool to_grayscale = false;
+  static bool view_color = false;
+  static bool view_grayscale = false;
+  static bool view_monochrome = false;
 
   // menu buttons listeners
   if (open_image) {
     std::cout << "Open image menu item enabled!" << '\n';
 
     // https://github.com/aiekick/ImGuiFileDialog#simple-dialog-
-    // open file dialog
-    ImGuiFileDialog::Instance()->OpenDialog("ChooseFileKey", "Choose file", ".jpg,.png", "../assets");
+    // open image dialog
+    ImGuiFileDialog::Instance()->OpenDialog("OpenImageKey", "Open image", ".jpg,.png", "./assets");
     open_image = false;
   }
 
-  // display file dialog
-  if (ImGuiFileDialog::Instance()->Display("ChooseFileKey")) {
+  // display open image file dialog
+  if (ImGuiFileDialog::Instance()->Display("OpenImageKey")) {
     // get file path if ok
     if (ImGuiFileDialog::Instance()->IsOk()) {
       // free previously opened image & open new one
@@ -177,26 +180,58 @@ void Dialog::render_menu() {
       m_image.free();
       m_image = Image(path_image, false);
       m_texture.set_image(m_image);
-      std::cout << "path image: " << path_image << '\n';
+      std::cout << "Path of opened image: " << path_image << '\n';
     }
 
     // close file dialog
     ImGuiFileDialog::Instance()->Close();
   }
 
-  // update shader to show image in grayscale
-  if (to_gray) {
-    // convert opened image to grayscale
-    // m_image = ImageUtils::to_gray(m_image);
-    // m_texture.set_image(m_image);
-    m_program = &m_programs.at("grayscale");
-    to_gray = false;
+  // save edited image
+  if (save_image) {
+    // open image dialog
+    ImGuiFileDialog::Instance()->OpenDialog("SaveImageKey", "Save image", ".jpg,.png", "filename");
+    save_image = false;
+  }
+
+  // display save image file dialog
+  if (ImGuiFileDialog::Instance()->Display("SaveImageKey")) {
+    // get file path if ok
+    if (ImGuiFileDialog::Instance()->IsOk()) {
+      // free previously opened image & open new one
+      std::string path_image = ImGuiFileDialog::Instance()->GetFilePathName();
+      m_image.save(path_image);
+      std::cout << "Path for saved image: " << path_image << '\n';
+    }
+
+    // close file dialog
+    ImGuiFileDialog::Instance()->Close();
+  }
+
+  // convert opened image to grayscale & update shader to show monochrome image
+  if (to_grayscale) {
+    m_image = ImageUtils::to_gray(m_image);
+    m_texture.set_image(m_image);
+    m_program = &m_programs.at("monochrome");
+    to_grayscale = false;
   }
 
   // update to shader to show image in color
-  if (to_color) {
+  if (view_color) {
     m_program = &m_programs.at("color");
-    to_color = false;
+    view_color = false;
+  }
+
+  // update shader to show image in grayscale
+  if (view_grayscale) {
+    m_program = &m_programs.at("grayscale");
+    view_grayscale = false;
+  }
+
+  // update to shader to show monochrome (1-channel) image
+  if (view_monochrome) {
+    m_program = &m_programs.at("monochrome");
+    view_monochrome = false;
   }
 
   if (quit_app) {
@@ -208,13 +243,20 @@ void Dialog::render_menu() {
   if (ImGui::BeginMainMenuBar()) {
     if (ImGui::BeginMenu("File")) {
       ImGui::MenuItem("Open", NULL, &open_image);
+      ImGui::MenuItem("Save", NULL, &save_image);
       ImGui::MenuItem("Quit", NULL, &quit_app);
       ImGui::EndMenu();
     }
 
-    if (ImGui::BeginMenu("Image")) {
-      ImGui::MenuItem("To gray", NULL, &to_gray);
-      ImGui::MenuItem("To color", NULL, &to_color);
+    if (ImGui::BeginMenu("Edit")) {
+      ImGui::MenuItem("To grayscale", NULL, &to_grayscale);
+      ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("View")) {
+      ImGui::MenuItem("Color", NULL, &view_color);
+      ImGui::MenuItem("Grayscale", NULL, &view_grayscale);
+      ImGui::MenuItem("Monochrome", NULL, &view_monochrome);
       ImGui::EndMenu();
     }
 
