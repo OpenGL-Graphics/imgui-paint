@@ -10,6 +10,7 @@
 #include "image.hpp"
 #include "program.hpp"
 #include "ui/canvas.hpp"
+#include "ui/menu.hpp"
 
 /* Main ImGui window */
 class Dialog {
@@ -21,13 +22,12 @@ public:
 private:
   Window m_window;
 
-  /* needed to position windows & content within them */
-  ImVec2 m_size_menu;
-
-  /* Image holder */
+  /* Main menu & image holder */
+  Menu m_menu;
   Canvas m_canvas;
 
-  void render_menu();
+  /* listener for menu click events */
+  void on_menu_click();
 };
 
 #endif // DIALOG_HPP

@@ -12,7 +12,8 @@
  */
 Dialog::Dialog(const Window& window):
   m_window(window),
-  m_canvas()
+  m_canvas(),
+  m_menu()
 {
   // setup imgui context & glfw/opengl backends
   ImGui::CreateContext();
@@ -27,38 +28,27 @@ void Dialog::render() {
   ImGui_ImplGlfw_NewFrame();
   ImGui::NewFrame();
 
-  // top main menu
-  render_menu();
+  // top main menu with its listeners
+  m_menu.render();
+  on_menu_click();
 
   // image
-  m_canvas.render(m_size_menu);
+  m_canvas.render(m_menu.size_menu);
 
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
-/**
- * Render menu bar with its items & attach listeners to its items
- * Sets the size of menu drawn to place content windows below it
- */
-void Dialog::render_menu() {
-  // static vars only init on 1st function call
-  static bool open_image = false;
-  static bool save_image = false;
-  static bool quit_app = false;
-  static bool to_grayscale = false;
-  static bool view_color = false;
-  static bool view_grayscale = false;
-  static bool view_monochrome = false;
-
+/* Listeners for click on menu items */
+void Dialog::on_menu_click() {
   // menu buttons listeners
-  if (open_image) {
+  if (m_menu.open_image) {
     std::cout << "Open image menu item enabled!" << '\n';
 
     // https://github.com/aiekick/ImGuiFileDialog#simple-dialog-
     // open image dialog
     ImGuiFileDialog::Instance()->OpenModal("OpenImageKey", "Open image", "Image files{.jpg,.png}", "./assets/images", "");
-    open_image = false;
+    m_menu.open_image = false;
   }
 
   // display open image file dialog
@@ -76,10 +66,10 @@ void Dialog::render_menu() {
   }
 
   // save edited image
-  if (save_image) {
+  if (m_menu.save_image) {
     // open image dialog
     ImGuiFileDialog::Instance()->OpenModal("SaveImageKey", "Save image", "Image files{.jpg,.png}", "./assets/images", "");
-    save_image = false;
+    m_menu.save_image = false;
   }
 
   // display save image file dialog
@@ -97,57 +87,31 @@ void Dialog::render_menu() {
   }
 
   // convert opened image to grayscale & update shader to show monochrome image
-  if (to_grayscale) {
+  if (m_menu.to_grayscale) {
     m_canvas.to_grayscale();
-    to_grayscale = false;
+    m_menu.to_grayscale = false;
   }
 
   // update to shader to show image in color
-  if (view_color) {
+  if (m_menu.view_color) {
     m_canvas.set_shader("color");
-    view_color = false;
+    m_menu.view_color = false;
   }
 
   // update shader to show image in grayscale
-  if (view_grayscale) {
+  if (m_menu.view_grayscale) {
     m_canvas.set_shader("grayscale");
-    view_grayscale = false;
+    m_menu.view_grayscale = false;
   }
 
   // update to shader to show monochrome (1-channel) image
-  if (view_monochrome) {
+  if (m_menu.view_monochrome) {
     m_canvas.set_shader("monochrome");
-    view_monochrome = false;
+    m_menu.view_monochrome = false;
   }
 
-  if (quit_app) {
+  if (m_menu.quit_app) {
     m_window.close();
-  }
-
-  // menu items act like toggle buttons in imgui
-  // bool var set/unset on every click
-  if (ImGui::BeginMainMenuBar()) {
-    if (ImGui::BeginMenu("File")) {
-      ImGui::MenuItem("Open", NULL, &open_image);
-      ImGui::MenuItem("Save", NULL, &save_image);
-      ImGui::MenuItem("Quit", NULL, &quit_app);
-      ImGui::EndMenu();
-    }
-
-    if (ImGui::BeginMenu("Edit")) {
-      ImGui::MenuItem("To grayscale", NULL, &to_grayscale);
-      ImGui::EndMenu();
-    }
-
-    if (ImGui::BeginMenu("View")) {
-      ImGui::MenuItem("Color", NULL, &view_color);
-      ImGui::MenuItem("Grayscale", NULL, &view_grayscale);
-      ImGui::MenuItem("Monochrome", NULL, &view_monochrome);
-      ImGui::EndMenu();
-    }
-
-    m_size_menu = ImGui::GetWindowSize();
-    ImGui::EndMainMenuBar();
   }
 }
 
