@@ -10,6 +10,7 @@
 #include "image.hpp"
 #include "program.hpp"
 
+/* Main ImGui window */
 class Dialog {
 public:
   Dialog(const Window& window);

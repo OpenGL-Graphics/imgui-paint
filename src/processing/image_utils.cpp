@@ -3,7 +3,7 @@
  * https://solarianprogrammer.com/2019/06/10/c-programming-reading-writing-images-stb_image-libraries/
  */
 #include <iostream>
-#include "image_utils.hpp"
+#include "processing/image_utils.hpp"
 
 /* Convert image to grayscale by averaging rgb components */
 Image ImageUtils::to_gray(const Image& image_in) {

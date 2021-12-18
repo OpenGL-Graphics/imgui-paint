@@ -5,8 +5,8 @@
 #include "imgui_impl_opengl3.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 
-#include "dialog.hpp"
-#include "image_utils.hpp"
+#include "ui/dialog.hpp"
+#include "processing/image_utils.hpp"
 #include "shader_exception.hpp"
 
 
@@ -66,8 +66,7 @@ void Dialog::render() {
   ImGui::SetNextWindowSize(m_size_content);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
   bool p_open;
-  // ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoTitleBar;
-  ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar;
+  ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize;
   ImGui::Begin("Dialog title", &p_open, window_flags);
 
   // render image using custom shader (for grayscale) on drawlist associated with current frame
@@ -167,12 +166,12 @@ void Dialog::render_menu() {
 
     // https://github.com/aiekick/ImGuiFileDialog#simple-dialog-
     // open image dialog
-    ImGuiFileDialog::Instance()->OpenDialog("OpenImageKey", "Open image", ".jpg,.png", "./assets");
+    ImGuiFileDialog::Instance()->OpenModal("OpenImageKey", "Open image", "Image files{.jpg,.png}", "./assets/images", "");
     open_image = false;
   }
 
   // display open image file dialog
-  if (ImGuiFileDialog::Instance()->Display("OpenImageKey")) {
+  if (ImGuiFileDialog::Instance()->Display("OpenImageKey", ImGuiWindowFlags_None, ImVec2(600, 300), ImVec2(600, 300))) {
     // get file path if ok
     if (ImGuiFileDialog::Instance()->IsOk()) {
       // free previously opened image & open new one
@@ -190,12 +189,12 @@ void Dialog::render_menu() {
   // save edited image
   if (save_image) {
     // open image dialog
-    ImGuiFileDialog::Instance()->OpenDialog("SaveImageKey", "Save image", ".jpg,.png", "filename");
+    ImGuiFileDialog::Instance()->OpenModal("SaveImageKey", "Save image", "Image files{.jpg,.png}", "./assets/images", "");
     save_image = false;
   }
 
   // display save image file dialog
-  if (ImGuiFileDialog::Instance()->Display("SaveImageKey")) {
+  if (ImGuiFileDialog::Instance()->Display("SaveImageKey", ImGuiWindowFlags_None, ImVec2(600, 300), ImVec2(600, 300))) {
     // get file path if ok
     if (ImGuiFileDialog::Instance()->IsOk()) {
       // free previously opened image & open new one
