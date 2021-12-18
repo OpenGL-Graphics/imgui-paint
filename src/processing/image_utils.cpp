@@ -6,7 +6,7 @@
 #include "processing/image_utils.hpp"
 
 /* Convert image to grayscale by averaging rgb components */
-Image ImageUtils::to_gray(const Image& image_in) {
+Image ImageUtils::to_grayscale(const Image& image_in) {
   int n_channels = image_in.n_channels;
   std::cout << "n_channels: " << n_channels << '\n';
   int n_pixels = image_in.width * image_in.height;

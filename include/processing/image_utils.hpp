@@ -4,7 +4,7 @@
 #include "image.hpp"
 
 namespace ImageUtils {
-  Image to_gray(const Image& image_in);
+  Image to_grayscale(const Image& image_in);
 };
 
 #endif // IMAGE_UTILS_HPP
