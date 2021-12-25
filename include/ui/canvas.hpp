@@ -14,7 +14,7 @@
 class Canvas {
 public:
   Canvas();
-  void render(const ImVec2& size_menu);
+  void render(float y_offset);
   void free();
 
   void set_shader(const std::string& key);

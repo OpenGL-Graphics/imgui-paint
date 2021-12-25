@@ -3,7 +3,6 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
-#include "IconsFontAwesome5.h"
 
 #include "ui/dialog.hpp"
 #include "fonts/fonts.hpp"
@@ -15,7 +14,8 @@
 Dialog::Dialog(const Window& window):
   m_window(window),
   m_canvas(),
-  m_menu()
+  m_menu(),
+  m_toolbar()
 {
   // setup imgui context & glfw/opengl backends
   ImGui::CreateContext();
@@ -37,25 +37,15 @@ void Dialog::render() {
   m_menu.render();
   on_menu_click();
 
+  // toolbar
+  m_toolbar.render(m_menu.size.y);
+
   // image
-  m_canvas.render(m_menu.size_menu);
+  float y_offset = m_menu.size.y + m_toolbar.size.y;
+  m_canvas.render(y_offset);
 
-  /// button & text with fonts
-  bool p_open;
-  ImGui::Begin("Dialog title", &p_open);
-  if (ImGui::Button("Click me")) {
-    std::cout << "Button clicked!" << '\n';
-  }
-
-  ImGui::Text(ICON_FA_SEARCH "lorem ipsum dolor sit amet");
-  ImGui::Text(ICON_FA_SHARE);
-
-  ImGui::End();
-  ///
-
-  /// show metrics window
-  ImGui::ShowMetricsWindow();
-  ///
+  // show metrics window (for loaded fonts & glyphs)
+  // ImGui::ShowMetricsWindow();
 
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
@@ -64,13 +54,14 @@ void Dialog::render() {
 /* Listeners for click on menu items */
 void Dialog::on_menu_click() {
   // menu buttons listeners
-  if (m_menu.open_image) {
+  if (m_menu.open_image || m_toolbar.open_image) {
     std::cout << "Open image menu item enabled!" << '\n';
 
     // https://github.com/aiekick/ImGuiFileDialog#simple-dialog-
     // open image dialog
     ImGuiFileDialog::Instance()->OpenModal("OpenImageKey", "Open image", "Image files{.jpg,.png}", "./assets/images", "");
     m_menu.open_image = false;
+    m_toolbar.open_image = false;
   }
 
   // display open image file dialog
@@ -88,10 +79,11 @@ void Dialog::on_menu_click() {
   }
 
   // save edited image
-  if (m_menu.save_image) {
+  if (m_menu.save_image || m_toolbar.save_image) {
     // open image dialog
     ImGuiFileDialog::Instance()->OpenModal("SaveImageKey", "Save image", "Image files{.jpg,.png}", "./assets/images", "");
     m_menu.save_image = false;
+    m_toolbar.save_image = false;
   }
 
   // display save image file dialog
@@ -132,7 +124,7 @@ void Dialog::on_menu_click() {
     m_menu.view_monochrome = false;
   }
 
-  if (m_menu.quit_app) {
+  if (m_menu.quit_app || m_toolbar.quit_app) {
     m_window.close();
   }
 }

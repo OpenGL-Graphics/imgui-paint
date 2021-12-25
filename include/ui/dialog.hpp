@@ -11,6 +11,7 @@
 #include "program.hpp"
 #include "ui/canvas.hpp"
 #include "ui/menu.hpp"
+#include "ui/toolbar.hpp"
 
 /* Main ImGui window */
 class Dialog {
@@ -22,9 +23,10 @@ public:
 private:
   Window m_window;
 
-  /* Main menu & image holder */
+  /* Main menu, image holder, toolbar */
   Menu m_menu;
   Canvas m_canvas;
+  Toolbar m_toolbar;
 
   /* listener for menu click events */
   void on_menu_click();

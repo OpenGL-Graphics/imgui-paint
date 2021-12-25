@@ -33,7 +33,7 @@ void Menu::render() {
       ImGui::EndMenu();
     }
 
-    size_menu = ImGui::GetWindowSize();
+    size = ImGui::GetWindowSize();
     ImGui::EndMainMenuBar();
   }
 }

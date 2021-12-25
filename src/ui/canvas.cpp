@@ -22,8 +22,6 @@ Canvas::Canvas():
   // `unordered_map::operator[]()` requires map's value (i.e. Program) to have default constructor
   m_program(&m_programs.at("color"))
 {
-  std::cout << "Texture constructor: " << m_texture.id << '\n';
-
   // vertex or fragment shaders failed to compile
   if (m_program->has_failed()) {
     throw ShaderException();
@@ -67,19 +65,19 @@ void Canvas::draw_with_custom_shader(const ImDrawList* parent_list, const ImDraw
 
 /**
  * Render image inside ImGui window
- * @param size_menu width & height of menu to determine size & offset of image canvas
+ * @param y_offset heights of menu & toolbar used to offset image canvas
  */
-void Canvas::render(const ImVec2& size_menu) {
+void Canvas::render(float y_offset) {
   // draw rect in background
   // main window's content size
   ImGuiIO& io = ImGui::GetIO(); // configures imgui
   ImVec2 size_display = io.DisplaySize;
-  ImVec2 m_size_content = { size_display.x, size_display.y - size_menu.y };
-  ImGui::GetForegroundDrawList()->AddRect({0, 0}, size_display, 0xFF0000FF);
+  ImVec2 m_size_content = { size_display.x, size_display.y - y_offset };
+  // ImGui::GetForegroundDrawList()->AddRect({0, 0}, size_display, 0xFF0000FF);
 
   // imgui window of specified size, anchored at (0, 0), & without padding
   // origin at upper-left corner
-  ImGui::SetNextWindowPos({ 0.0f, size_menu.y });
+  ImGui::SetNextWindowPos({ 0.0f, y_offset });
   ImGui::SetNextWindowSize(m_size_content);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
   bool p_open;
