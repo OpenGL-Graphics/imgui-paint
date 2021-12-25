@@ -29,3 +29,8 @@ Downloaded from [repo][imgui-filedialog-repo] and installed following the [tutor
 
 [imgui-filedialog-repo]: https://github.com/aiekick/ImGuiFileDialog
 [imgui-filedialog-tutorial]: https://github.com/aiekick/ImGuiFileDialog#structure
+
+# IconFontCppHeaders
+Downloaded from [repo][icon-font-repo]
+
+[icon-font-repo]: https://github.com/juliettef/IconFontCppHeaders

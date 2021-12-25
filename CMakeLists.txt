@@ -26,6 +26,10 @@ target_include_directories(imgui PUBLIC include/imgui include)
 add_library(file_dialog SHARED src/ImGuiFileDialog/ImGuiFileDialog.cpp)
 target_include_directories(file_dialog PUBLIC include/ImGuiFileDialog include/imgui)
 
+# header-only library
+add_library(icon_font INTERFACE)
+target_include_directories(icon_font INTERFACE include/IconFontCppHeaders)
+
 # glfw window & shader (with texture & glad) libraries from submodule
 add_subdirectory(glfw-window)
 add_subdirectory(opengl-shader)
@@ -34,6 +38,7 @@ add_subdirectory(opengl-shader)
 file(GLOB SRC
   "src/ui/*.cpp"
   "src/processing/*.cpp"
+  "src/fonts/*.cpp"
   "src/main.cpp"
 )
 add_executable(main ${SRC})
@@ -43,4 +48,5 @@ target_link_libraries(main
   glfw_window
   opengl_shader
   file_dialog
+  icon_font
 )

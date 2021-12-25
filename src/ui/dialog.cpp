@@ -3,8 +3,10 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
+#include "IconsFontAwesome5.h"
 
 #include "ui/dialog.hpp"
+#include "fonts/fonts.hpp"
 
 /**
  * Dialog made with imgui
@@ -20,9 +22,8 @@ Dialog::Dialog(const Window& window):
   ImGui_ImplGlfw_InitForOpenGL(m_window.w, true);
   ImGui_ImplOpenGL3_Init("#version 130");
 
-  // load font (first font loaded used by default without push/pop)
-  ImGuiIO& io = ImGui::GetIO(); // configures imgui
-  ImFont* font = io.Fonts->AddFontFromFileTTF("assets/fonts/DroidSans.ttf", 16.0f);
+  // load text & icon fonts
+  Fonts::load();
 }
 
 /* Render dialog in main loop */
@@ -38,6 +39,23 @@ void Dialog::render() {
 
   // image
   m_canvas.render(m_menu.size_menu);
+
+  /// button & text with fonts
+  bool p_open;
+  ImGui::Begin("Dialog title", &p_open);
+  if (ImGui::Button("Click me")) {
+    std::cout << "Button clicked!" << '\n';
+  }
+
+  ImGui::Text(ICON_FA_SEARCH "lorem ipsum dolor sit amet");
+  ImGui::Text(ICON_FA_SHARE);
+
+  ImGui::End();
+  ///
+
+  /// show metrics window
+  ImGui::ShowMetricsWindow();
+  ///
 
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
