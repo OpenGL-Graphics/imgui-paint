@@ -72,7 +72,7 @@ void Canvas::draw_with_custom_shader(const ImDrawList* parent_list, const ImDraw
 void Canvas::render(const ImVec2& size_menu) {
   // draw rect in background
   // main window's content size
-  ImGuiIO io = ImGui::GetIO(); // configures imgui
+  ImGuiIO& io = ImGui::GetIO(); // configures imgui
   ImVec2 size_display = io.DisplaySize;
   ImVec2 m_size_content = { size_display.x, size_display.y - size_menu.y };
   ImGui::GetForegroundDrawList()->AddRect({0, 0}, size_display, 0xFF0000FF);

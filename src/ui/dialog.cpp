@@ -19,6 +19,10 @@ Dialog::Dialog(const Window& window):
   ImGui::CreateContext();
   ImGui_ImplGlfw_InitForOpenGL(m_window.w, true);
   ImGui_ImplOpenGL3_Init("#version 130");
+
+  // load font (first font loaded used by default without push/pop)
+  ImGuiIO& io = ImGui::GetIO(); // configures imgui
+  ImFont* font = io.Fonts->AddFontFromFileTTF("assets/fonts/DroidSans.ttf", 16.0f);
 }
 
 /* Render dialog in main loop */
