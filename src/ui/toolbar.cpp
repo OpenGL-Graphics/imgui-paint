@@ -6,7 +6,8 @@
 Toolbar::Toolbar():
   open_image(false),
   save_image(false),
-  quit_app(false)
+  quit_app(false),
+  zoom_in(false), zoom_out(false)
 {
 }
 
@@ -47,6 +48,16 @@ void Toolbar::render(float y_offset) {
 
   if (ImGui::Button(ICON_FA_WINDOW_CLOSE, { 2*size_font, -1.0f })) {
     quit_app = true;
+  }
+  ImGui::SameLine(3 * (2*size_font + 1)); // relative to window left corner
+
+  if (ImGui::Button(ICON_FA_PLUS_CIRCLE, { 2*size_font, -1.0f })) {
+    zoom_in = true;
+  }
+  ImGui::SameLine(4 * (2*size_font + 1)); // relative to window left corner
+
+  if (ImGui::Button(ICON_FA_MINUS_CIRCLE, { 2*size_font, -1.0f })) {
+    zoom_out = true;
   }
 
   // avoids applying same style to subsequent windows

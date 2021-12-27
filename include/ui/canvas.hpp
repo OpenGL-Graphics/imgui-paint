@@ -11,8 +11,9 @@
  * Turned into a static class bcos static callback `draw_with_custom_shader()`'s data (texture & program) freed before it's called
  * https://github.com/ocornut/imgui/issues/4770
  */
-class Canvas {
-public:
+struct Canvas {
+  float zoom;
+
   Canvas();
   void render(float y_offset);
   void free();

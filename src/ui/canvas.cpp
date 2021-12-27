@@ -20,7 +20,8 @@ Canvas::Canvas():
   },
 
   // `unordered_map::operator[]()` requires map's value (i.e. Program) to have default constructor
-  m_program(&m_programs.at("color"))
+  m_program(&m_programs.at("color")),
+  zoom(1.0f)
 {
   // vertex or fragment shaders failed to compile
   if (m_program->has_failed()) {
@@ -123,7 +124,7 @@ void Canvas::set_shader(const std::string& key) {
 void Canvas::render_image(float y_offset) {
   // double casting avoids `warning: cast to pointer from integer of different size` i.e. smaller
   m_texture.attach();
-  ImVec2 size_image = ImVec2(m_texture.width, m_texture.height);
+  ImVec2 size_image = ImVec2(zoom * m_texture.width, zoom * m_texture.height);
   ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
 
   // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986)
@@ -137,9 +138,9 @@ void Canvas::render_image(float y_offset) {
     ImGui::Text("x: %f, y: %f", position_mouse_img.x, position_mouse_img.y);
 
     // starting & ending image offsets in [0, 1]
-    float zoom = 4.0f;
+    float zoom_subset = 4.0f;
     float size_region = 32.0f;
-    ImVec2 size_subset = ImVec2(zoom * size_region, zoom * size_region);
+    ImVec2 size_subset = ImVec2(zoom_subset * size_region, zoom_subset * size_region);
     ImVec2 uv_start = ImVec2(position_mouse_img.x / size_image.x, position_mouse_img.y / size_image.y);
     ImVec2 uv_end = ImVec2((position_mouse_img.x + size_region) / size_image.x, (position_mouse_img.y + size_region) / size_image.y);
     ImGui::Image((void*)(intptr_t) m_texture.id, size_subset, uv_start, uv_end);

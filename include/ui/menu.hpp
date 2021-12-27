@@ -12,6 +12,7 @@ struct Menu {
   bool open_image, save_image, quit_app; // menu File
   bool to_grayscale; // menu Edit
   bool view_color, view_grayscale, view_monochrome; // menu View
+  bool zoom_in, zoom_out; // menu Zoom
 
   Menu();
   void render();

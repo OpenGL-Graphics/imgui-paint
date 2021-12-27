@@ -3,7 +3,8 @@
 Menu::Menu():
   open_image(false), save_image(false), quit_app(false), // menu File
   to_grayscale(false), // menu Edit
-  view_color(false), view_grayscale(false), view_monochrome(false) // menu View
+  view_color(false), view_grayscale(false), view_monochrome(false), // menu View
+  zoom_in(false), zoom_out(false) // menu Zoom
 {
 }
 
@@ -30,6 +31,12 @@ void Menu::render() {
       ImGui::MenuItem("Color", NULL, &view_color);
       ImGui::MenuItem("Grayscale", NULL, &view_grayscale);
       ImGui::MenuItem("Monochrome", NULL, &view_monochrome);
+      ImGui::EndMenu();
+    }
+
+    if (ImGui::BeginMenu("Zoom")) {
+      ImGui::MenuItem("Zoom in", NULL, &zoom_in);
+      ImGui::MenuItem("Zoom out", NULL, &zoom_out);
       ImGui::EndMenu();
     }
 

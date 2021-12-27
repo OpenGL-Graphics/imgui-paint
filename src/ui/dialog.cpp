@@ -127,6 +127,18 @@ void Dialog::on_menu_click() {
     m_menu.view_monochrome = false;
   }
 
+  // zoom in/out
+  if (m_menu.zoom_in || m_toolbar.zoom_in) {
+    m_canvas.zoom *= 2;
+    m_menu.zoom_in = false;
+    m_toolbar.zoom_in = false;
+  }
+  if (m_menu.zoom_out || m_toolbar.zoom_out) {
+    m_canvas.zoom /= 2;
+    m_menu.zoom_out = false;
+    m_toolbar.zoom_out = false;
+  }
+
   if (m_menu.quit_app || m_toolbar.quit_app) {
     m_window.close();
   }

@@ -10,6 +10,7 @@ struct Toolbar {
 
   /* flags set on button click (needed to activate listeners in `Dialog`) */
   bool open_image, save_image, quit_app;
+  bool zoom_in, zoom_out;
 
   Toolbar();
   void render(float y_offset);
