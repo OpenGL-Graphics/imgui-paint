@@ -47,6 +47,9 @@ void Dialog::render() {
   // show metrics window (for loaded fonts & glyphs)
   // ImGui::ShowMetricsWindow();
 
+  // show demo window (for imgui functionalities)
+  ImGui::ShowDemoWindow();
+
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }

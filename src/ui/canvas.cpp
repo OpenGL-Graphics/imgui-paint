@@ -10,8 +10,8 @@ std::array<GLuint, 2> Canvas::callback_data;
 
 /* Canvas showing image */
 Canvas::Canvas():
-  m_image("./assets/images/grass_logo.png", false),
-  m_texture(m_image),
+  m_image("./assets/images/checkerboard.png", false),
+  m_texture(m_image, GL_TEXTURE0, Wrapping::BLACK),
 
   m_programs{
     {"color", Program("assets/shaders/basic.vert", "assets/shaders/color.frag")},
@@ -86,7 +86,7 @@ void Canvas::render(float y_offset) {
 
   // render image using custom shader (for grayscale) on drawlist associated with current frame
   use_shader();
-  render_image();
+  render_image(y_offset);
   unuse_shader();
 
   // render imgui window
@@ -118,11 +118,34 @@ void Canvas::set_shader(const std::string& key) {
 /**
  * Show image from texture
  * Change to custom shader before rendering image
+ * @param y_offset heights of menu & toolbar used to calculate cursor position rel. to image
  */
-void Canvas::render_image() {
+void Canvas::render_image(float y_offset) {
   // double casting avoids `warning: cast to pointer from integer of different size` i.e. smaller
   m_texture.attach();
-  ImGui::Image((void*)(intptr_t) m_texture.id, ImVec2(m_texture.width, m_texture.height));
+  ImVec2 size_image = ImVec2(m_texture.width, m_texture.height);
+  ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
+
+  // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986)
+  if (ImGui::IsItemHovered()) {
+    ImGuiIO& io = ImGui::GetIO();
+    ImGui::BeginTooltip();
+
+    // change of origin of cursor position (by default org=upper-left corner & pos starting from 1)
+    ImVec2 position_mouse = io.MousePos;
+    ImVec2 position_mouse_img = ImVec2(position_mouse.x - 1, position_mouse.y - y_offset - 1);
+    ImGui::Text("x: %f, y: %f", position_mouse_img.x, position_mouse_img.y);
+
+    // starting & ending image offsets in [0, 1]
+    float zoom = 4.0f;
+    float size_region = 32.0f;
+    ImVec2 size_subset = ImVec2(zoom * size_region, zoom * size_region);
+    ImVec2 uv_start = ImVec2(position_mouse_img.x / size_image.x, position_mouse_img.y / size_image.y);
+    ImVec2 uv_end = ImVec2((position_mouse_img.x + size_region) / size_image.x, (position_mouse_img.y + size_region) / size_image.y);
+    ImGui::Image((void*)(intptr_t) m_texture.id, size_subset, uv_start, uv_end);
+
+    ImGui::EndTooltip();
+  }
 }
 
 /* Change image opened in canvas to given `path_image` */

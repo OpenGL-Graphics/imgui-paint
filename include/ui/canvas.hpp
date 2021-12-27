@@ -47,7 +47,7 @@ private:
 
   void use_shader();
   void unuse_shader();
-  void render_image();
+  void render_image(float y_offset);
 
   /*
    * Holds texture & program to pass to `draw_with_custom_shader()`
