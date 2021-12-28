@@ -37,6 +37,7 @@ add_subdirectory(opengl-shader)
 # main executable
 file(GLOB SRC
   "src/ui/*.cpp"
+  "src/ui/tooltips/*.cpp"
   "src/processing/*.cpp"
   "src/fonts/*.cpp"
   "src/main.cpp"

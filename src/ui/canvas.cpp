@@ -21,7 +21,8 @@ Canvas::Canvas():
 
   // `unordered_map::operator[]()` requires map's value (i.e. Program) to have default constructor
   m_program(&m_programs.at("color")),
-  zoom(1.0f)
+  m_zoom(1.0f),
+  m_tooltip_image(m_texture)
 {
   // vertex or fragment shaders failed to compile
   if (m_program->has_failed()) {
@@ -86,9 +87,7 @@ void Canvas::render(float y_offset) {
   ImGui::Begin("Dialog title", &p_open, window_flags);
 
   // render image using custom shader (for grayscale) on drawlist associated with current frame
-  use_shader();
   render_image(y_offset);
-  unuse_shader();
 
   // render imgui window
   ImGui::PopStyleVar(); // avoids assertion error (associated with padding above)
@@ -117,36 +116,32 @@ void Canvas::set_shader(const std::string& key) {
 }
 
 /**
- * Show image from texture
+ * Show image from texture using custom shader
  * Change to custom shader before rendering image
  * @param y_offset heights of menu & toolbar used to calculate cursor position rel. to image
  */
 void Canvas::render_image(float y_offset) {
+  // render image using custom shader
+  use_shader();
+
   // double casting avoids `warning: cast to pointer from integer of different size` i.e. smaller
   m_texture.attach();
-  ImVec2 size_image = ImVec2(zoom * m_texture.width, zoom * m_texture.height);
+  ImVec2 size_image = ImVec2(m_zoom * m_texture.width, m_zoom * m_texture.height);
   ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
 
   // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986)
   if (ImGui::IsItemHovered()) {
-    ImGuiIO& io = ImGui::GetIO();
-    ImGui::BeginTooltip();
-
-    // change of origin of cursor position (by default org=upper-left corner & pos starting from 1)
-    ImVec2 position_mouse = io.MousePos;
-    ImVec2 position_mouse_img = ImVec2(position_mouse.x - 1, position_mouse.y - y_offset - 1);
-    ImGui::Text("x: %f, y: %f", position_mouse_img.x, position_mouse_img.y);
-
-    // starting & ending image offsets in [0, 1]
-    float zoom_subset = 4.0f;
-    float size_region = 32.0f;
-    ImVec2 size_subset = ImVec2(zoom_subset * size_region, zoom_subset * size_region);
-    ImVec2 uv_start = ImVec2(position_mouse_img.x / size_image.x, position_mouse_img.y / size_image.y);
-    ImVec2 uv_end = ImVec2((position_mouse_img.x + size_region) / size_image.x, (position_mouse_img.y + size_region) / size_image.y);
-    ImGui::Image((void*)(intptr_t) m_texture.id, size_subset, uv_start, uv_end);
-
-    ImGui::EndTooltip();
+    m_tooltip_image.render(y_offset, m_zoom);
   }
+
+  unuse_shader();
+
+  /// Color picker
+  // initial color set only at beginning
+  static float color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
+  ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar;
+  ImGui::ColorEdit4("My color", color, ImGuiColorEditFlags_AlphaBar);
+  ///
 }
 
 /* Change image opened in canvas to given `path_image` */
@@ -173,4 +168,12 @@ void Canvas::free() {
   for (auto& pair: m_programs) {
     pair.second.free();
   }
+}
+
+void Canvas::zoom_in() {
+  m_zoom *= 2.0f;
+}
+
+void Canvas::zoom_out() {
+  m_zoom /= 2.0f;
 }

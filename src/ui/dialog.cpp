@@ -129,12 +129,12 @@ void Dialog::on_menu_click() {
 
   // zoom in/out
   if (m_menu.zoom_in || m_toolbar.zoom_in) {
-    m_canvas.zoom *= 2;
+    m_canvas.zoom_in();
     m_menu.zoom_in = false;
     m_toolbar.zoom_in = false;
   }
   if (m_menu.zoom_out || m_toolbar.zoom_out) {
-    m_canvas.zoom /= 2;
+    m_canvas.zoom_out();
     m_menu.zoom_out = false;
     m_toolbar.zoom_out = false;
   }

@@ -5,15 +5,15 @@
 
 #include "imgui.h"
 #include "program.hpp"
+#include "tooltips/tooltip_image.hpp"
 
 /**
  * Canvas where image is displayed
  * Turned into a static class bcos static callback `draw_with_custom_shader()`'s data (texture & program) freed before it's called
  * https://github.com/ocornut/imgui/issues/4770
  */
-struct Canvas {
-  float zoom;
-
+class Canvas {
+public:
   Canvas();
   void render(float y_offset);
   void free();
@@ -23,6 +23,9 @@ struct Canvas {
   void change_image(const std::string& path_image);
   void save_image(const std::string& path_image);
   void to_grayscale();
+
+  void zoom_in();
+  void zoom_out();
 
 private:
   /**
@@ -57,6 +60,11 @@ private:
    * https://github.com/ocornut/imgui/issues/4770
    */
   static std::array<GLuint, 2> callback_data;
+
+  float m_zoom;
+
+  /* Tooltips */
+  TooltipImage m_tooltip_image;
 
   /* static methods can be passed as function pointers callbacks (no `this` argument) */
   static void draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd);
