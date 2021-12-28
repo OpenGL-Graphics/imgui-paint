@@ -22,7 +22,8 @@ Canvas::Canvas():
   // `unordered_map::operator[]()` requires map's value (i.e. Program) to have default constructor
   m_program(&m_programs.at("color")),
   m_zoom(1.0f),
-  m_tooltip_image(m_texture)
+  m_tooltip_image(m_texture),
+  m_tooltip_pixel(m_image)
 {
   // vertex or fragment shaders failed to compile
   if (m_program->has_failed()) {
@@ -75,13 +76,13 @@ void Canvas::render(float y_offset) {
   ImGuiIO& io = ImGui::GetIO(); // configures imgui
   ImVec2 size_display = io.DisplaySize;
   ImVec2 m_size_content = { size_display.x, size_display.y - y_offset };
-  // ImGui::GetForegroundDrawList()->AddRect({0, 0}, size_display, 0xFF0000FF);
 
   // imgui window of specified size, anchored at (0, 0), & without padding
   // origin at upper-left corner
   ImGui::SetNextWindowPos({ 0.0f, y_offset });
   ImGui::SetNextWindowSize(m_size_content);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); // otherwise cursor coords rel. to image org starts at 1 (not 0)
   bool p_open;
   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize;
   ImGui::Begin("Dialog title", &p_open, window_flags);
@@ -131,7 +132,8 @@ void Canvas::render_image(float y_offset) {
 
   // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986)
   if (ImGui::IsItemHovered()) {
-    m_tooltip_image.render(y_offset, m_zoom);
+    // m_tooltip_image.render(y_offset, m_zoom);
+    m_tooltip_pixel.render(y_offset);
   }
 
   unuse_shader();

@@ -14,10 +14,10 @@ TooltipImage::TooltipImage(const Texture2D& texture):
 void TooltipImage::render(float y_offset, float zoom) {
     ImGui::BeginTooltip();
 
-    // change of origin of cursor position (by default org=upper-left corner & pos starting from 1)
+    // change of origin of cursor position (by default org=upper-left corner)
     ImGuiIO& io = ImGui::GetIO();
     ImVec2 position_mouse = io.MousePos;
-    ImVec2 position_mouse_img = ImVec2(position_mouse.x - 1, position_mouse.y - y_offset - 1);
+    ImVec2 position_mouse_img = ImVec2(position_mouse.x, position_mouse.y - y_offset);
     ImGui::Text("x: %f, y: %f", position_mouse_img.x, position_mouse_img.y);
 
     // starting & ending image offsets in [0, 1]

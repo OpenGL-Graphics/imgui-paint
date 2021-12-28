@@ -40,6 +40,7 @@ file(GLOB SRC
   "src/ui/tooltips/*.cpp"
   "src/processing/*.cpp"
   "src/fonts/*.cpp"
+  "src/utils/*.cpp"
   "src/main.cpp"
 )
 add_executable(main ${SRC})

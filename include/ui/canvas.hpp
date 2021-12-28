@@ -6,6 +6,7 @@
 #include "imgui.h"
 #include "program.hpp"
 #include "tooltips/tooltip_image.hpp"
+#include "tooltips/tooltip_pixel.hpp"
 
 /**
  * Canvas where image is displayed
@@ -65,6 +66,7 @@ private:
 
   /* Tooltips */
   TooltipImage m_tooltip_image;
+  TooltipPixel m_tooltip_pixel;
 
   /* static methods can be passed as function pointers callbacks (no `this` argument) */
   static void draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd);
