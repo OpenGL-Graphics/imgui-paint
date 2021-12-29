@@ -8,11 +8,14 @@ struct Menu {
   /* width/height in # of pixels needed to position & set size of image canvas */
   ImVec2 size;
 
-  /* flags set on button click (needed to activate listeners in `Dialog`) */
-  bool open_image, save_image, quit_app; // menu File
-  bool to_grayscale; // menu Edit
-  bool view_color, view_grayscale, view_monochrome; // menu View
-  bool zoom_in, zoom_out; // menu Zoom
+  /**
+   * flags set on button click/radio button check (needed to activate listeners in `Dialog`)
+   * Declared static so they can be accessed from all classes (incl. listeners)
+   */
+  static bool open_image, save_image, quit_app; // menu File
+  static bool to_grayscale; // menu Edit
+  static bool view_color, view_grayscale, view_monochrome; // menu View
+  static bool zoom_in, zoom_out; // menu Zoom
 
   Menu();
   void render();

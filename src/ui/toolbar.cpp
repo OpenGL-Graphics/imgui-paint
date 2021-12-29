@@ -3,11 +3,15 @@
 #include "IconsFontAwesome5.h"
 #include "ui/toolbar.hpp"
 
-Toolbar::Toolbar():
-  open_image(false),
-  save_image(false),
-  quit_app(false),
-  zoom_in(false), zoom_out(false)
+/* static members definition (avoids linking error) & initialization */
+bool Toolbar::open_image = false;
+bool Toolbar::save_image = false;
+bool Toolbar::quit_app = false;
+bool Toolbar::zoom_in = false;
+bool Toolbar::zoom_out = false;
+HoverMode Toolbar::hover_mode = HoverMode::IMAGE_SUBSET;
+
+Toolbar::Toolbar()
 {
 }
 
@@ -37,31 +41,39 @@ void Toolbar::render(float y_offset) {
 
   // buttons on same line & filling all vertical space
   if (ImGui::Button(ICON_FA_FOLDER_OPEN, { 2*size_font, -1.0f })) {
-    open_image = true;
+    Toolbar::open_image = true;
   }
   ImGui::SameLine(2*size_font + 1); // relative to window left corner
 
   if (ImGui::Button(ICON_FA_SAVE, { 2*size_font, -1.0f })) {
-    save_image = true;
+    Toolbar::save_image = true;
   }
   ImGui::SameLine(2 * (2*size_font + 1)); // relative to window left corner
 
   if (ImGui::Button(ICON_FA_WINDOW_CLOSE, { 2*size_font, -1.0f })) {
-    quit_app = true;
+    Toolbar::quit_app = true;
   }
   ImGui::SameLine(3 * (2*size_font + 1)); // relative to window left corner
 
   if (ImGui::Button(ICON_FA_PLUS_CIRCLE, { 2*size_font, -1.0f })) {
-    zoom_in = true;
+    Toolbar::zoom_in = true;
   }
   ImGui::SameLine(4 * (2*size_font + 1)); // relative to window left corner
 
   if (ImGui::Button(ICON_FA_MINUS_CIRCLE, { 2*size_font, -1.0f })) {
-    zoom_out = true;
+    Toolbar::zoom_out = true;
   }
+  ImGui::SameLine(5 * (2*size_font + 1)); // relative to window left corner
+
+  // radio buttons for what to show on image hover (imgui_demo.cpp:560)
+  // compile-time casting between pointer types works with reinterpret_cast (not with static_cast)
+  ImGui::SetCursorPos({ ImGui::GetCursorPosX(), size_font/2.0f - 3.0f });
+  ImGui::RadioButton("Image Subset", reinterpret_cast<int *>(&Toolbar::hover_mode), 0);
+  ImGui::SameLine();
+  ImGui::RadioButton("Pixel value", reinterpret_cast<int *>(&Toolbar::hover_mode), 1);
 
   // avoids applying same style to subsequent windows
   ImGui::PopStyleColor();
-  ImGui::PopStyleVar();
+  ImGui::PopStyleVar(1);
   ImGui::End();
 }

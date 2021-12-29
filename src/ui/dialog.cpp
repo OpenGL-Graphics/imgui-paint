@@ -57,14 +57,14 @@ void Dialog::render() {
 /* Listeners for click on menu items */
 void Dialog::on_menu_click() {
   // menu buttons listeners
-  if (m_menu.open_image || m_toolbar.open_image) {
+  if (Menu::open_image || Toolbar::open_image) {
     std::cout << "Open image menu item enabled!" << '\n';
 
     // https://github.com/aiekick/ImGuiFileDialog#simple-dialog-
     // open image dialog
     ImGuiFileDialog::Instance()->OpenModal("OpenImageKey", "Open image", "Image files{.jpg,.png}", "./assets/images", "");
-    m_menu.open_image = false;
-    m_toolbar.open_image = false;
+    Menu::open_image = false;
+    Toolbar::open_image = false;
   }
 
   // display open image file dialog
@@ -82,11 +82,11 @@ void Dialog::on_menu_click() {
   }
 
   // save edited image
-  if (m_menu.save_image || m_toolbar.save_image) {
+  if (Menu::save_image || Toolbar::save_image) {
     // open image dialog
     ImGuiFileDialog::Instance()->OpenModal("SaveImageKey", "Save image", "Image files{.jpg,.png}", "./assets/images", "");
-    m_menu.save_image = false;
-    m_toolbar.save_image = false;
+    Menu::save_image = false;
+    Toolbar::save_image = false;
   }
 
   // display save image file dialog
@@ -104,42 +104,42 @@ void Dialog::on_menu_click() {
   }
 
   // convert opened image to grayscale & update shader to show monochrome image
-  if (m_menu.to_grayscale) {
+  if (Menu::to_grayscale) {
     m_canvas.to_grayscale();
-    m_menu.to_grayscale = false;
+    Menu::to_grayscale = false;
   }
 
   // update to shader to show image in color
-  if (m_menu.view_color) {
+  if (Menu::view_color) {
     m_canvas.set_shader("color");
-    m_menu.view_color = false;
+    Menu::view_color = false;
   }
 
   // update shader to show image in grayscale
-  if (m_menu.view_grayscale) {
+  if (Menu::view_grayscale) {
     m_canvas.set_shader("grayscale");
-    m_menu.view_grayscale = false;
+    Menu::view_grayscale = false;
   }
 
   // update to shader to show monochrome (1-channel) image
-  if (m_menu.view_monochrome) {
+  if (Menu::view_monochrome) {
     m_canvas.set_shader("monochrome");
-    m_menu.view_monochrome = false;
+    Menu::view_monochrome = false;
   }
 
   // zoom in/out
-  if (m_menu.zoom_in || m_toolbar.zoom_in) {
+  if (Menu::zoom_in || Toolbar::zoom_in) {
     m_canvas.zoom_in();
-    m_menu.zoom_in = false;
-    m_toolbar.zoom_in = false;
+    Menu::zoom_in = false;
+    Toolbar::zoom_in = false;
   }
-  if (m_menu.zoom_out || m_toolbar.zoom_out) {
+  if (Menu::zoom_out || Toolbar::zoom_out) {
     m_canvas.zoom_out();
-    m_menu.zoom_out = false;
-    m_toolbar.zoom_out = false;
+    Menu::zoom_out = false;
+    Toolbar::zoom_out = false;
   }
 
-  if (m_menu.quit_app || m_toolbar.quit_app) {
+  if (Menu::quit_app || Toolbar::quit_app) {
     m_window.close();
   }
 }

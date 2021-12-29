@@ -2,6 +2,9 @@
 #include <iostream>
 
 #include "ui/canvas.hpp"
+#include "ui/toolbar.hpp"
+#include "ui/hover_mode.hpp"
+
 #include "processing/image_utils.hpp"
 #include "shader_exception.hpp"
 
@@ -85,13 +88,13 @@ void Canvas::render(float y_offset) {
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); // otherwise cursor coords rel. to image org starts at 1 (not 0)
   bool p_open;
   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize;
-  ImGui::Begin("Dialog title", &p_open, window_flags);
+  ImGui::Begin("Canvas", &p_open, window_flags);
 
   // render image using custom shader (for grayscale) on drawlist associated with current frame
   render_image(y_offset);
 
   // render imgui window
-  ImGui::PopStyleVar(); // avoids assertion error (associated with padding above)
+  ImGui::PopStyleVar(2); // cancel no-padding & no-border (i.e. arg=2 styles)
   ImGui::End();
 }
 
@@ -130,20 +133,24 @@ void Canvas::render_image(float y_offset) {
   ImVec2 size_image = ImVec2(m_zoom * m_texture.width, m_zoom * m_texture.height);
   ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
 
-  // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986)
+  // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986) or pixel value accord. to toolbar radio button
   if (ImGui::IsItemHovered()) {
-    // m_tooltip_image.render(y_offset, m_zoom);
-    m_tooltip_pixel.render(y_offset);
+    if (Toolbar::hover_mode == HoverMode::IMAGE_SUBSET)
+      m_tooltip_image.render(y_offset, m_zoom);
+    else
+      m_tooltip_pixel.render(y_offset);
   }
 
   unuse_shader();
 
+  /*
   /// Color picker
   // initial color set only at beginning
   static float color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
   ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar;
   ImGui::ColorEdit4("My color", color, ImGuiColorEditFlags_AlphaBar);
   ///
+  */
 }
 
 /* Change image opened in canvas to given `path_image` */
