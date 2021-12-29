@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "glad/glad.h"
-#include "ui/dialog.hpp"
+#include "ui/frame.hpp"
 
 int main() {
   // glfw window
@@ -22,8 +22,8 @@ int main() {
     std::cout << "GLSL version: " << glGetString(GL_SHADING_LANGUAGE_VERSION) << "\n";
   }
 
-  // initialize dialog with imgui
-  Dialog dialog(window);
+  // initialize window frame with imgui
+  Frame frame(window);
 
   // main loop
   while (!window.is_closed()) {
@@ -31,8 +31,8 @@ int main() {
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
-    // render imgui dialog
-    dialog.render();
+    // render imgui frame
+    frame.render();
 
     // process events & show rendered buffer
     window.process_events();
@@ -40,7 +40,7 @@ int main() {
   }
 
   // destroy imgui
-  dialog.free();
+  frame.free();
 
   // destroy window & terminate glfw
   window.destroy();

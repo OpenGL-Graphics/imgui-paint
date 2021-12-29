@@ -1,62 +1,33 @@
 #include <iostream>
 
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_opengl3.h"
 #include "ImGuiFileDialog/ImGuiFileDialog.h"
 
-#include "ui/dialog.hpp"
-#include "fonts/fonts.hpp"
+#include "ui/listeners/listener_canvas.hpp"
+#include "ui/menu.hpp"
+#include "ui/toolbar.hpp"
 
 /**
- * Dialog made with imgui
- * Inspired by: https://github.com/ocornut/imgui/blob/master/examples/example_glfw_opengl3/main.cpp
+ * @param canvas Pointer passed so it can be modified (instead of modifying a copy)
  */
-Dialog::Dialog(const Window& window):
-  m_window(window),
-  m_canvas(),
-  m_menu(),
-  m_toolbar()
+ListenerCanvas::ListenerCanvas(Canvas* canvas):
+  m_canvas(canvas)
 {
-  // setup imgui context & glfw/opengl backends
-  ImGui::CreateContext();
-  ImGui_ImplGlfw_InitForOpenGL(m_window.w, true);
-  ImGui_ImplOpenGL3_Init("#version 130");
-
-  // load text & icon fonts
-  Fonts::load();
 }
 
-/* Render dialog in main loop */
-void Dialog::render() {
-  // start imgui frame
-  ImGui_ImplOpenGL3_NewFrame();
-  ImGui_ImplGlfw_NewFrame();
-  ImGui::NewFrame();
-
-  // top main menu with its listeners
-  m_menu.render();
-  on_menu_click();
-
-  // toolbar
-  m_toolbar.render(m_menu.size.y);
-
-  // image
-  float y_offset = m_menu.size.y + m_toolbar.size.y;
-  m_canvas.render(y_offset);
-
-  // show metrics window (for loaded fonts & glyphs)
-  // ImGui::ShowMetricsWindow();
-
-  // show demo window (for imgui functionalities)
-  ImGui::ShowDemoWindow();
-
-  ImGui::Render();
-  ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+/* Handle all events related to canvas fired on click on menu items or toolbar buttons */
+void ListenerCanvas::handle_all() {
+  on_open_image();
+  on_save_image();
+  on_to_grayscale();
+  on_view_color();
+  on_view_grayscale();
+  on_view_monochrome();
+  on_zoom_in();
+  on_zoom_out();
 }
 
-/* Listeners for click on menu items */
-void Dialog::on_menu_click() {
-  // menu buttons listeners
+/* Open a new image */
+void ListenerCanvas::on_open_image() {
   if (Menu::open_image || Toolbar::open_image) {
     std::cout << "Open image menu item enabled!" << '\n';
 
@@ -73,15 +44,17 @@ void Dialog::on_menu_click() {
     if (ImGuiFileDialog::Instance()->IsOk()) {
       // free previously opened image & open new one
       std::string path_image = ImGuiFileDialog::Instance()->GetFilePathName();
-      m_canvas.change_image(path_image);
+      m_canvas->change_image(path_image);
       std::cout << "Path of opened image: " << path_image << '\n';
     }
 
     // close file dialog
     ImGuiFileDialog::Instance()->Close();
   }
+}
 
-  // save edited image
+/* Save opened/edited image */
+void ListenerCanvas::on_save_image() {
   if (Menu::save_image || Toolbar::save_image) {
     // open image dialog
     ImGuiFileDialog::Instance()->OpenModal("SaveImageKey", "Save image", "Image files{.jpg,.png}", "./assets/images", "");
@@ -95,60 +68,59 @@ void Dialog::on_menu_click() {
     if (ImGuiFileDialog::Instance()->IsOk()) {
       // free previously opened image & open new one
       std::string path_image = ImGuiFileDialog::Instance()->GetFilePathName();
-      m_canvas.save_image(path_image);
+      m_canvas->save_image(path_image);
       std::cout << "Path for saved image: " << path_image << '\n';
     }
 
     // close file dialog
     ImGuiFileDialog::Instance()->Close();
   }
+}
 
-  // convert opened image to grayscale & update shader to show monochrome image
+/* convert opened image to grayscale & update shader to show monochrome image */
+void ListenerCanvas::on_to_grayscale() {
   if (Menu::to_grayscale) {
-    m_canvas.to_grayscale();
+    m_canvas->to_grayscale();
     Menu::to_grayscale = false;
-  }
-
-  // update to shader to show image in color
-  if (Menu::view_color) {
-    m_canvas.set_shader("color");
-    Menu::view_color = false;
-  }
-
-  // update shader to show image in grayscale
-  if (Menu::view_grayscale) {
-    m_canvas.set_shader("grayscale");
-    Menu::view_grayscale = false;
-  }
-
-  // update to shader to show monochrome (1-channel) image
-  if (Menu::view_monochrome) {
-    m_canvas.set_shader("monochrome");
-    Menu::view_monochrome = false;
-  }
-
-  // zoom in/out
-  if (Menu::zoom_in || Toolbar::zoom_in) {
-    m_canvas.zoom_in();
-    Menu::zoom_in = false;
-    Toolbar::zoom_in = false;
-  }
-  if (Menu::zoom_out || Toolbar::zoom_out) {
-    m_canvas.zoom_out();
-    Menu::zoom_out = false;
-    Toolbar::zoom_out = false;
-  }
-
-  if (Menu::quit_app || Toolbar::quit_app) {
-    m_window.close();
   }
 }
 
-/* Destroy canvas & imgui */
-void Dialog::free() {
-  m_canvas.free();
+/* update to shader to show image in color */
+void ListenerCanvas::on_view_color() {
+  if (Menu::view_color) {
+    m_canvas->set_shader("color");
+    Menu::view_color = false;
+  }
+}
 
-  ImGui_ImplOpenGL3_Shutdown();
-  ImGui_ImplGlfw_Shutdown();
-  ImGui::DestroyContext();
+/* update shader to show image in grayscale */
+void ListenerCanvas::on_view_grayscale() {
+  if (Menu::view_grayscale) {
+    m_canvas->set_shader("grayscale");
+    Menu::view_grayscale = false;
+  }
+}
+
+/* update to shader to show monochrome (1-channel) image */
+void ListenerCanvas::on_view_monochrome() {
+  if (Menu::view_monochrome) {
+    m_canvas->set_shader("monochrome");
+    Menu::view_monochrome = false;
+  }
+}
+
+void ListenerCanvas::on_zoom_in() {
+  if (Menu::zoom_in || Toolbar::zoom_in) {
+    m_canvas->zoom_in();
+    Menu::zoom_in = false;
+    Toolbar::zoom_in = false;
+  }
+}
+
+void ListenerCanvas::on_zoom_out() {
+  if (Menu::zoom_out || Toolbar::zoom_out) {
+    m_canvas->zoom_out();
+    Menu::zoom_out = false;
+    Toolbar::zoom_out = false;
+  }
 }
