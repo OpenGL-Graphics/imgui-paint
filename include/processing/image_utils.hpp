@@ -5,6 +5,7 @@
 
 namespace ImageUtils {
   Image to_grayscale(const Image& image_in);
+  Image blur(const Image& image_in);
 };
 
 #endif // IMAGE_UTILS_HPP

@@ -8,6 +8,7 @@ bool Menu::quit_app = false;
 
 // menu Edit
 bool Menu::to_grayscale = false;
+bool Menu::blur = false;
 
 // menu View
 bool Menu::view_color = false;
@@ -38,6 +39,7 @@ void Menu::render() {
 
     if (ImGui::BeginMenu("Edit")) {
       ImGui::MenuItem("To grayscale", NULL, &Menu::to_grayscale);
+      ImGui::MenuItem("Blur", NULL, &Menu::blur);
       ImGui::EndMenu();
     }
 

@@ -19,6 +19,7 @@ void ListenerCanvas::handle_all() {
   on_open_image();
   on_save_image();
   on_to_grayscale();
+  on_blur();
   on_view_color();
   on_view_grayscale();
   on_view_monochrome();
@@ -82,6 +83,14 @@ void ListenerCanvas::on_to_grayscale() {
   if (Menu::to_grayscale) {
     m_canvas->to_grayscale();
     Menu::to_grayscale = false;
+  }
+}
+
+/* blur opened image using a 9x9 avg filter */
+void ListenerCanvas::on_blur() {
+  if (Menu::blur) {
+    m_canvas->blur();
+    Menu::blur = false;
   }
 }
 

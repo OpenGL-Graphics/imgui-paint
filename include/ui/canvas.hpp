@@ -24,6 +24,7 @@ public:
   void change_image(const std::string& path_image);
   void save_image(const std::string& path_image);
   void to_grayscale();
+  void blur();
 
   void zoom_in();
   void zoom_out();

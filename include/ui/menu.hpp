@@ -13,7 +13,7 @@ struct Menu {
    * Declared static so they can be accessed from all classes (incl. listeners)
    */
   static bool open_image, save_image, quit_app; // menu File
-  static bool to_grayscale; // menu Edit
+  static bool to_grayscale, blur; // menu Edit
   static bool view_color, view_grayscale, view_monochrome; // menu View
   static bool zoom_in, zoom_out; // menu Zoom
 

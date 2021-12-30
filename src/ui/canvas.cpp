@@ -165,10 +165,17 @@ void Canvas::save_image(const std::string& path_image) {
   m_image.save(path_image);
 }
 
+/* Convert image to grayscale and switch shader to monochrome */
 void Canvas::to_grayscale() {
   m_image = ImageUtils::to_grayscale(m_image);
   m_texture.set_image(m_image);
   m_program = &m_programs.at("monochrome");
+}
+
+/* Blur image using a 9x9 avg. filter */
+void Canvas::blur() {
+  m_image = ImageUtils::blur(m_image);
+  m_texture.set_image(m_image);
 }
 
 /* Free opengl texture (image holder) & shaders programs used to display it */

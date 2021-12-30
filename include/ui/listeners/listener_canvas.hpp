@@ -14,6 +14,7 @@ private:
   void on_open_image();
   void on_save_image();
   void on_to_grayscale();
+  void on_blur();
   void on_view_color();
   void on_view_grayscale();
   void on_view_monochrome();
