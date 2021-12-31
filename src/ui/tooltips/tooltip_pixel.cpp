@@ -14,10 +14,8 @@ TooltipPixel::TooltipPixel(const Image& image):
 void TooltipPixel::render(float y_offset) {
     ImGui::BeginTooltip();
 
-    // change of origin of cursor position (by default org=upper-left corner)
-    ImGuiIO& io = ImGui::GetIO();
-    ImVec2 position_mouse = io.MousePos;
-    ImVec2 position_mouse_img = ImVec2(position_mouse.x, position_mouse.y - y_offset);
+    // mouse cursor rel. to canvas's origin
+    ImVec2 position_mouse_img = Utils::get_mouse_position({ 0.0f, y_offset });
     ImGui::Text("x: %f, y: %f", position_mouse_img.x, position_mouse_img.y);
 
     // get pixel value (image is a vector not a 2d array)

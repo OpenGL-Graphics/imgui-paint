@@ -9,7 +9,7 @@ bool Toolbar::save_image = false;
 bool Toolbar::quit_app = false;
 bool Toolbar::zoom_in = false;
 bool Toolbar::zoom_out = false;
-HoverMode Toolbar::hover_mode = HoverMode::IMAGE_SUBSET;
+HoverMode Toolbar::hover_mode = HoverMode::NONE;
 
 Toolbar::Toolbar()
 {
@@ -68,9 +68,11 @@ void Toolbar::render(float y_offset) {
   // radio buttons for what to show on image hover (imgui_demo.cpp:560)
   // compile-time casting between pointer types works with reinterpret_cast (not with static_cast)
   ImGui::SetCursorPos({ ImGui::GetCursorPosX(), size_font/2.0f - 3.0f });
-  ImGui::RadioButton("Image Subset", reinterpret_cast<int *>(&Toolbar::hover_mode), 0);
+  ImGui::RadioButton("None", reinterpret_cast<int *>(&Toolbar::hover_mode), static_cast<int>(HoverMode::NONE));
   ImGui::SameLine();
-  ImGui::RadioButton("Pixel value", reinterpret_cast<int *>(&Toolbar::hover_mode), 1);
+  ImGui::RadioButton("Image subset", reinterpret_cast<int *>(&Toolbar::hover_mode), static_cast<int>(HoverMode::IMAGE_SUBSET));
+  ImGui::SameLine();
+  ImGui::RadioButton("Pixel value", reinterpret_cast<int *>(&Toolbar::hover_mode), static_cast<int>(HoverMode::PIXEL_VALUE));
 
   // avoids applying same style to subsequent windows
   ImGui::PopStyleColor();

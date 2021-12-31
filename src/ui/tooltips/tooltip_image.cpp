@@ -1,5 +1,6 @@
 #include "imgui.h"
 #include "ui/tooltips/tooltip_image.hpp"
+#include "utils/utils.hpp"
 
 TooltipImage::TooltipImage(const Texture2D& texture):
   m_texture(texture)
@@ -14,10 +15,8 @@ TooltipImage::TooltipImage(const Texture2D& texture):
 void TooltipImage::render(float y_offset, float zoom) {
     ImGui::BeginTooltip();
 
-    // change of origin of cursor position (by default org=upper-left corner)
-    ImGuiIO& io = ImGui::GetIO();
-    ImVec2 position_mouse = io.MousePos;
-    ImVec2 position_mouse_img = ImVec2(position_mouse.x, position_mouse.y - y_offset);
+    // mouse cursor rel. to canvas's origin
+    ImVec2 position_mouse_img = Utils::get_mouse_position({ 0.0f, y_offset });
     ImGui::Text("x: %f, y: %f", position_mouse_img.x, position_mouse_img.y);
 
     // starting & ending image offsets in [0, 1]

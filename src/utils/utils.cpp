@@ -35,3 +35,17 @@ ImVec4 Utils::vector_to_imvec4(const std::vector<unsigned char>& pixel_value) {
 
   return color;
 }
+
+/**
+ * Get mouse cursor positions rel. to parent's origin defined by `offset`
+ * @param offset Position of parent element (e.g. canvas)
+ * Used by ui/tooltips
+ */
+ImVec2 Utils::get_mouse_position(const ImVec2& offset) {
+  // change of origin of cursor position (by default org=upper-left corner)
+  ImGuiIO& io = ImGui::GetIO();
+  ImVec2 position_mouse = io.MousePos;
+  ImVec2 position_mouse_parent = ImVec2(position_mouse.x - offset.x, position_mouse.y - offset.y);
+
+  return position_mouse_parent;
+}

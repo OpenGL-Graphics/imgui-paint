@@ -4,6 +4,7 @@
 #include "ui/canvas.hpp"
 #include "ui/toolbar.hpp"
 #include "ui/hover_mode.hpp"
+#include "utils/utils.hpp"
 
 #include "processing/image_utils.hpp"
 #include "shader_exception.hpp"
@@ -13,6 +14,7 @@ std::array<GLuint, 2> Canvas::callback_data;
 
 /* Canvas showing image */
 Canvas::Canvas():
+  // m_image("./assets/images/fruits.jpg", false),
   m_image("./assets/images/checkerboard.png", false),
   m_texture(m_image, GL_TEXTURE0, Wrapping::BLACK),
 
@@ -133,12 +135,25 @@ void Canvas::render_image(float y_offset) {
   ImVec2 size_image = ImVec2(m_zoom * m_texture.width, m_zoom * m_texture.height);
   ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
 
+  ///
+  // draw rectangle at mouse click position
+  static ImVec2 position_mouse_img = ImVec2(0.0f, 0.0f);
+
+  if (ImGui::IsItemClicked()) {
+    position_mouse_img = Utils::get_mouse_position();
+    std::cout << "x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
+  }
+
+  ImGui::GetForegroundDrawList()->AddCircleFilled(position_mouse_img, 5.0f, 0xFFFFFFFF);
+  ///
+
   // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986) or pixel value accord. to toolbar radio button
   if (ImGui::IsItemHovered()) {
-    if (Toolbar::hover_mode == HoverMode::IMAGE_SUBSET)
+    if (Toolbar::hover_mode == HoverMode::IMAGE_SUBSET) {
       m_tooltip_image.render(y_offset, m_zoom);
-    else
+    } else if (Toolbar::hover_mode == HoverMode::PIXEL_VALUE) {
       m_tooltip_pixel.render(y_offset);
+    }
   }
 
   unuse_shader();
