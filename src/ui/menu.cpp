@@ -1,4 +1,8 @@
+#include "imgui/imgui.h"
+
 #include "ui/menu.hpp"
+#include "ui/constants/mouse.hpp"
+#include "ui/constants/size.hpp"
 
 /* static members definition (avoids linking error) & initialization */
 // menu File
@@ -18,6 +22,9 @@ bool Menu::view_monochrome = false;
 // menu Zoom
 bool Menu::zoom_in = false;
 bool Menu::zoom_out = false;
+
+// menu Draw
+bool Menu::draw_circle = false;
 
 Menu::Menu()
 {
@@ -56,7 +63,23 @@ void Menu::render() {
       ImGui::EndMenu();
     }
 
-    size = ImGui::GetWindowSize();
+    // disable menu items if already in 'draw' mode
+    if (ImGui::BeginMenu("Draw")) {
+      if (Mouse::click_mode == ClickMode::DRAW_CIRCLE)
+        ImGui::BeginDisabled(true);
+
+      bool switch_draw_circle = false;
+      ImGui::MenuItem("Circle", NULL, &switch_draw_circle);
+      ImGui::EndMenu();
+
+      if (switch_draw_circle)
+        Mouse::click_mode = ClickMode::DRAW_CIRCLE;
+
+      if (Mouse::click_mode == ClickMode::DRAW_CIRCLE)
+        ImGui::EndDisabled();
+    }
+
+    Size::menu = ImGui::GetWindowSize();
     ImGui::EndMainMenuBar();
   }
 }

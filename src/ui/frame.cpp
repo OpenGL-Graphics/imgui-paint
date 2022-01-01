@@ -39,8 +39,8 @@ void Frame::render() {
 
   // top main menu, toolbar, and image canvas
   m_menu.render();
-  m_toolbar.render(m_menu.size.y);
-  m_canvas.render(m_menu.size.y + m_toolbar.size.y);
+  m_toolbar.render();
+  m_canvas.render();
 
   // event listeners rel. to canvas & window
   m_listener_canvas.handle_all();

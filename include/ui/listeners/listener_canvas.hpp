@@ -20,6 +20,7 @@ private:
   void on_view_monochrome();
   void on_zoom_in();
   void on_zoom_out();
+  void on_draw_circle();
 };
 
 #endif // LISTENER_CANVAS_HPP

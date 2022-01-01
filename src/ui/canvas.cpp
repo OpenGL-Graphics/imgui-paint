@@ -3,8 +3,11 @@
 
 #include "ui/canvas.hpp"
 #include "ui/toolbar.hpp"
-#include "ui/hover_mode.hpp"
+#include "ui/menu.hpp"
 #include "ui/imgui_utils.hpp"
+#include "ui/constants/mouse.hpp"
+#include "ui/constants/size.hpp"
+#include "ui/enumerations/hover_mode.hpp"
 
 #include "image/image_utils.hpp"
 #include "image/image_cv.hpp"
@@ -75,19 +78,19 @@ void Canvas::draw_with_custom_shader(const ImDrawList* parent_list, const ImDraw
 
 /**
  * Render image inside ImGui window
- * @param y_offset heights of menu & toolbar used to offset image canvas
  */
-void Canvas::render(float y_offset) {
+void Canvas::render() {
   // draw rect in background
   // main window's content size
   ImGuiIO& io = ImGui::GetIO(); // configures imgui
   ImVec2 size_display = io.DisplaySize;
-  ImVec2 m_size_content = { size_display.x, size_display.y - y_offset };
+  float y_offset = Size::menu.y + Size::toolbar.y;
+  Size::canvas = { size_display.x, size_display.y - y_offset };
 
   // imgui window of specified size, anchored at (0, 0), & without padding
   // origin at upper-left corner
   ImGui::SetNextWindowPos({ 0.0f, y_offset });
-  ImGui::SetNextWindowSize(m_size_content);
+  ImGui::SetNextWindowSize(Size::canvas);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); // otherwise cursor coords rel. to image org starts at 1 (not 0)
   bool p_open;
@@ -137,42 +140,37 @@ void Canvas::render_image(float y_offset) {
   ImVec2 size_image = ImVec2(m_zoom * m_texture.width, m_zoom * m_texture.height);
   ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
 
-  ///
-  // draw circle at mouse click position with opencv
-  static ImVec2 position_mouse_img = ImVec2(0.0f, 0.0f);
-
-  if (ImGui::IsItemClicked()) {
-    position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
-    std::cout << "x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
-
-    // convert unsigned char* to opencv image & draw circle
-    ImageCV image_cv(m_image);
-    image_cv.draw_circle({ static_cast<int>(position_mouse_img.x), static_cast<int>(position_mouse_img.y) });
-
-    // only copy res image to gpu coz `m_image.data/image_cv.mat.data` have same address => no need for free/assignment
-    m_texture.set_image(m_image);
+  // draw circle at mouse click position with opencv (managed by listener)
+  if (ImGui::IsItemClicked() && Mouse::click_mode == ClickMode::DRAW_CIRCLE) {
+    Toolbar::draw_circle = true;
+    Menu::draw_circle = true;
   }
-  ///
 
   // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986) or pixel value accord. to toolbar radio button
   if (ImGui::IsItemHovered()) {
-    if (Toolbar::hover_mode == HoverMode::IMAGE_SUBSET) {
+    if (Mouse::hover_mode == HoverMode::IMAGE_SUBSET) {
       m_tooltip_image.render(y_offset, m_zoom);
-    } else if (Toolbar::hover_mode == HoverMode::PIXEL_VALUE) {
+    } else if (Mouse::hover_mode == HoverMode::PIXEL_VALUE) {
       m_tooltip_pixel.render(y_offset);
     }
   }
 
   unuse_shader();
+}
 
-  /*
-  /// Color picker
-  // initial color set only at beginning
-  static float color[4] = {1.0f, 0.0f, 0.0f, 1.0f};
-  ImGuiColorEditFlags flags = ImGuiColorEditFlags_AlphaBar;
-  ImGui::ColorEdit4("My color", color, ImGuiColorEditFlags_AlphaBar);
-  ///
-  */
+/* Draw circle at mouse cursor click position with OpenCV */
+void Canvas::draw_circle() {
+  float y_offset = Size::menu.y + Size::toolbar.y;
+  ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
+  std::cout << "x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
+
+  // convert unsigned char* to opencv image & draw circle
+  ImageCV image_cv(m_image);
+  image_cv.draw_circle({ static_cast<int>(position_mouse_img.x), static_cast<int>(position_mouse_img.y) });
+
+  // only copy res image to gpu coz `m_image.data/image_cv.mat.data` have same address => no need for free/assignment
+  m_texture.set_image(m_image);
+  Mouse::click_mode = ClickMode::NONE;
 }
 
 /* Change image opened in canvas to given `path_image` */

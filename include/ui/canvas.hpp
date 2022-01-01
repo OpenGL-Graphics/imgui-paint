@@ -16,7 +16,7 @@
 class Canvas {
 public:
   Canvas();
-  void render(float y_offset);
+  void render();
   void free();
 
   void set_shader(const std::string& key);
@@ -28,6 +28,8 @@ public:
 
   void zoom_in();
   void zoom_out();
+
+  void draw_circle();
 
 private:
   /**

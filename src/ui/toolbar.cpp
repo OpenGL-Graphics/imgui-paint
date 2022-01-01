@@ -1,7 +1,12 @@
 #include <iostream>
 
+#include "imgui/imgui.h"
+
 #include "IconsFontAwesome5.h"
 #include "ui/toolbar.hpp"
+#include "ui/menu.hpp"
+#include "ui/constants/mouse.hpp"
+#include "ui/constants/size.hpp"
 
 /* static members definition (avoids linking error) & initialization */
 bool Toolbar::open_image = false;
@@ -9,7 +14,7 @@ bool Toolbar::save_image = false;
 bool Toolbar::quit_app = false;
 bool Toolbar::zoom_in = false;
 bool Toolbar::zoom_out = false;
-HoverMode Toolbar::hover_mode = HoverMode::NONE;
+bool Toolbar::draw_circle = false;
 
 Toolbar::Toolbar()
 {
@@ -19,12 +24,12 @@ Toolbar::Toolbar()
  * Button with FontAwesome fonts as labels
  * @param y_offset Menu height
  */
-void Toolbar::render(float y_offset) {
+void Toolbar::render() {
   // precalculate toolbar size a priori
   float size_font = ImGui::GetFontSize();
   ImGuiIO& io = ImGui::GetIO(); // configures imgui
   ImVec2 size_display = io.DisplaySize;
-  size = { size_display.x, 2*size_font };
+  Size::toolbar = { size_display.x, 2*size_font };
 
   // change background color to button color
   ImGuiStyle style = ImGui::GetStyle();
@@ -32,8 +37,8 @@ void Toolbar::render(float y_offset) {
   ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::ColorConvertFloat4ToU32(color_button));
 
   // anchored imgui window of specified size without padding
-  ImGui::SetNextWindowPos({ 0.0f, y_offset });
-  ImGui::SetNextWindowSize(size);
+  ImGui::SetNextWindowPos({ 0.0f, Size::menu.y });
+  ImGui::SetNextWindowSize(Size::toolbar);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
   bool p_open;
   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize;
@@ -65,14 +70,27 @@ void Toolbar::render(float y_offset) {
   }
   ImGui::SameLine(5 * (2*size_font + 1)); // relative to window left corner
 
+  // toolbar button disabled if already in right mode
+  if (Mouse::click_mode == ClickMode::DRAW_CIRCLE)
+    ImGui::BeginDisabled(true);
+
+  if (ImGui::Button(ICON_FA_CIRCLE, { 2*size_font, -1.0f })) {
+    Mouse::click_mode = ClickMode::DRAW_CIRCLE;
+  }
+
+  if (Mouse::click_mode == ClickMode::DRAW_CIRCLE)
+    ImGui::EndDisabled();
+
+  ImGui::SameLine(6 * (2*size_font + 1)); // relative to window left corner
+
   // radio buttons for what to show on image hover (imgui_demo.cpp:560)
   // compile-time casting between pointer types works with reinterpret_cast (not with static_cast)
   ImGui::SetCursorPos({ ImGui::GetCursorPosX(), size_font/2.0f - 3.0f });
-  ImGui::RadioButton("None", reinterpret_cast<int *>(&Toolbar::hover_mode), static_cast<int>(HoverMode::NONE));
+  ImGui::RadioButton("None", reinterpret_cast<int *>(&Mouse::hover_mode), static_cast<int>(HoverMode::NONE));
   ImGui::SameLine();
-  ImGui::RadioButton("Image subset", reinterpret_cast<int *>(&Toolbar::hover_mode), static_cast<int>(HoverMode::IMAGE_SUBSET));
+  ImGui::RadioButton("Image subset", reinterpret_cast<int *>(&Mouse::hover_mode), static_cast<int>(HoverMode::IMAGE_SUBSET));
   ImGui::SameLine();
-  ImGui::RadioButton("Pixel value", reinterpret_cast<int *>(&Toolbar::hover_mode), static_cast<int>(HoverMode::PIXEL_VALUE));
+  ImGui::RadioButton("Pixel value", reinterpret_cast<int *>(&Mouse::hover_mode), static_cast<int>(HoverMode::PIXEL_VALUE));
 
   // avoids applying same style to subsequent windows
   ImGui::PopStyleColor();
