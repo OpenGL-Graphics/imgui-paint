@@ -5,7 +5,7 @@
 #include <iostream>
 #include <cstring>
 
-#include "processing/image_utils.hpp"
+#include "image/image_utils.hpp"
 
 /* Convert image to grayscale by averaging rgb components */
 Image ImageUtils::to_grayscale(const Image& image_in) {

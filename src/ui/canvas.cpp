@@ -4,9 +4,11 @@
 #include "ui/canvas.hpp"
 #include "ui/toolbar.hpp"
 #include "ui/hover_mode.hpp"
-#include "utils/utils.hpp"
+#include "ui/imgui_utils.hpp"
 
-#include "processing/image_utils.hpp"
+#include "image/image_utils.hpp"
+#include "image/image_cv.hpp"
+
 #include "shader_exception.hpp"
 
 /* Static class members require a declaration in *.cpp (to allocate space for them) or be declared as `inline` in *.hpp */
@@ -14,8 +16,8 @@ std::array<GLuint, 2> Canvas::callback_data;
 
 /* Canvas showing image */
 Canvas::Canvas():
-  // m_image("./assets/images/fruits.jpg", false),
-  m_image("./assets/images/checkerboard.png", false),
+  m_image("./assets/images/fruits.jpg", false),
+  // m_image("./assets/images/checkerboard.png", false),
   m_texture(m_image, GL_TEXTURE0, Wrapping::BLACK),
 
   m_programs{
@@ -136,15 +138,20 @@ void Canvas::render_image(float y_offset) {
   ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
 
   ///
-  // draw rectangle at mouse click position
+  // draw circle at mouse click position with opencv
   static ImVec2 position_mouse_img = ImVec2(0.0f, 0.0f);
 
   if (ImGui::IsItemClicked()) {
-    position_mouse_img = Utils::get_mouse_position();
+    position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
     std::cout << "x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
-  }
 
-  ImGui::GetForegroundDrawList()->AddCircleFilled(position_mouse_img, 5.0f, 0xFFFFFFFF);
+    // convert unsigned char* to opencv image & draw circle
+    ImageCV image_cv(m_image);
+    image_cv.draw_circle({ static_cast<int>(position_mouse_img.x), static_cast<int>(position_mouse_img.y) });
+
+    // only copy res image to gpu coz `m_image.data/image_cv.mat.data` have same address => no need for free/assignment
+    m_texture.set_image(m_image);
+  }
   ///
 
   // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986) or pixel value accord. to toolbar radio button

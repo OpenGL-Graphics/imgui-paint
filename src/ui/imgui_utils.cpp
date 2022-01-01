@@ -1,10 +1,10 @@
-#include "utils/utils.hpp"
+#include "ui/imgui_utils.hpp"
 
 /**
  * Convert pixel value extracted from stb_image to a ImGui 4-channel vector
  * Transform pixel value into a 4-component vector in [0, 1]
  */
-ImVec4 Utils::vector_to_imvec4(const std::vector<unsigned char>& pixel_value) {
+ImVec4 ImGuiUtils::vector_to_imvec4(const std::vector<unsigned char>& pixel_value) {
   ImVec4 color;
   switch (pixel_value.size()) {
     case 4: // rgba
@@ -41,7 +41,7 @@ ImVec4 Utils::vector_to_imvec4(const std::vector<unsigned char>& pixel_value) {
  * @param offset Position of parent element (e.g. canvas)
  * Used by ui/tooltips
  */
-ImVec2 Utils::get_mouse_position(const ImVec2& offset) {
+ImVec2 ImGuiUtils::get_mouse_position(const ImVec2& offset) {
   // change of origin of cursor position (by default org=upper-left corner)
   ImGuiIO& io = ImGui::GetIO();
   ImVec2 position_mouse = io.MousePos;

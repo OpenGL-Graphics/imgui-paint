@@ -9,6 +9,9 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_BUILD_TYPE Debug)
 
+# opencv package
+find_package(OpenCV REQUIRED)
+
 # copy assets folder
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 
@@ -39,12 +42,12 @@ file(GLOB SRC
   "src/ui/*.cpp"
   "src/ui/tooltips/*.cpp"
   "src/ui/listeners/*.cpp"
-  "src/processing/*.cpp"
+  "src/image/*.cpp"
   "src/fonts/*.cpp"
-  "src/utils/*.cpp"
   "src/main.cpp"
 )
 add_executable(main ${SRC})
+target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS})
 target_link_libraries(main
   glad
   imgui
@@ -52,4 +55,5 @@ target_link_libraries(main
   opengl_shader
   file_dialog
   icon_font
+  ${OpenCV_LIBS}
 )

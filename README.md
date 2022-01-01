@@ -7,6 +7,9 @@ $ git submodule init
 $ git submodule update --init --recursive --remote  # also needed to get new commits from submodule
 ```
 
+# Dependencies
+- **ImGui:** used to render UI.
+- **Opencv:** used to draw shapes on the image, and needs to be installed beforehand.
 
 # Imgui
 - Source and header files for imgui were copied directly from [imgui-repo] into this project.
