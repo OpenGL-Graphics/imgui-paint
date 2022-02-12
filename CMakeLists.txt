@@ -8,9 +8,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak")
 
 # opencv package
-find_package(OpenCV REQUIRED)
+# find_package(OpenCV REQUIRED)
+
+# fill in Cairo headers & lib locations variable from /usr/lib/x86_64-linux-gnu/pkgconfig/{cairo.pc, xcb.pc}
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(CAIRO REQUIRED cairo)
 
 # copy assets folder
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
@@ -49,7 +54,10 @@ file(GLOB SRC
   "src/main.cpp"
 )
 add_executable(main ${SRC})
-target_include_directories(main PRIVATE ${OpenCV_INCLUDE_DIRS})
+target_include_directories(main PRIVATE
+  ${CAIRO_INCLUDE_DIRS}
+  # ${OpenCV_INCLUDE_DIRS}
+)
 target_link_libraries(main
   glad
   imgui
@@ -57,5 +65,6 @@ target_link_libraries(main
   opengl_shader
   file_dialog
   icon_font
-  ${OpenCV_LIBS}
+  ${CAIRO_LIBRARIES}
+  # ${OpenCV_LIBS}
 )

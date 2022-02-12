@@ -10,7 +10,7 @@
 #include "ui/enumerations/hover_mode.hpp"
 
 #include "image/image_utils.hpp"
-#include "image/image_cv.hpp"
+#include "image/image_vector.hpp"
 
 #include "shader_exception.hpp"
 
@@ -19,8 +19,7 @@ std::array<GLuint, 2> Canvas::callback_data;
 
 /* Canvas showing image */
 Canvas::Canvas():
-  m_image("./assets/images/fruits.jpg", false),
-  // m_image("./assets/images/checkerboard.png", false),
+  m_image("./assets/images/nature.png", false),
   m_texture(m_image, GL_TEXTURE0, Wrapping::BLACK),
 
   m_programs{
@@ -164,11 +163,18 @@ void Canvas::draw_circle() {
   ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
   std::cout << "x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
 
-  // convert unsigned char* to opencv image & draw circle
-  ImageCV image_cv(m_image);
-  image_cv.draw_circle({ static_cast<int>(position_mouse_img.x), static_cast<int>(position_mouse_img.y) });
+  // draw circle with Cairo instead of OpenCV (better quality with vectors)
+  ImageVector image_vector(m_image);
+  image_vector.draw_circle(position_mouse_img.x, position_mouse_img.y);
+  std::string path_image_out = "/tmp/image.png";
+  image_vector.save(path_image_out);
+  image_vector.free();
 
-  // only copy res image to gpu coz `m_image.data/image_cv.mat.data` have same address => no need for free/assignment
+  // free previous image & set it to saved temporary file
+  m_image.free();
+  m_image = Image(path_image_out, false);
+
+  // copy resulting image to gpu tetxure
   m_texture.set_image(m_image);
   Mouse::click_mode = ClickMode::NONE;
 }

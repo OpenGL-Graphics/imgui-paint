@@ -9,7 +9,9 @@ $ git submodule update --init --recursive --remote  # also needed to get new com
 
 # Dependencies
 - **ImGui:** used to render UI.
-- **Opencv:** used to draw shapes on the image, and needs to be installed beforehand.
+- **Cairo:** used to draw shapes on the image, and needs to be installed beforehand (see [this example][gist-cairo]).
+
+[gist-cairo]: https://gist.github.com/h4k1m0u/703a8c1afd4f256fd32f5446b8e6dae6
 
 # Imgui
 - Source and header files for imgui were copied directly from [imgui-repo] into this project.
