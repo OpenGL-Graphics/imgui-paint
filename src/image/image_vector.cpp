@@ -17,6 +17,15 @@ ImageVector::ImageVector(const Image& image) {
   m_context = cairo_create(m_surface);
 }
 
+/* Check error status for opened surface (e.g. "out of memory" when trying to open jpeg) */
+bool ImageVector::has_failed() {
+  cairo_status_t status = cairo_surface_status(m_surface);
+  std::string message = cairo_status_to_string(status);
+  std::cout << "Opening png with Cairo: " << message << '\n';
+
+  return status != CAIRO_STATUS_SUCCESS;
+}
+
 /**
  * Draw filled circle on image
  * Better quality with Cairo compared to OpenCV (thanks to vectors)
@@ -38,7 +47,11 @@ void ImageVector::draw_circle(double x, double y) {
  * https://www.cairographics.org/manual/cairo-Image-Surfaces.html#cairo-format-t
  */
 void ImageVector::save(const std::string& path_image) {
-  cairo_surface_write_to_png(m_surface, path_image.c_str());
+  cairo_status_t status = cairo_surface_write_to_png(m_surface, path_image.c_str());
+
+  // status message e.g. "out of memory" when trying to save an opened jpeg surface
+  std::string message = cairo_status_to_string(status);
+  std::cout << "Saving png with Cairo: " << message << '\n';
 }
 
 /* Free context & created surface */

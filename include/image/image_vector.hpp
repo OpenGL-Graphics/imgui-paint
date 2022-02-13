@@ -9,6 +9,7 @@
 class ImageVector {
 public:
   ImageVector(const Image& image);
+  bool has_failed();
   void draw_circle(double x, double y);
   void free();
   void save(const std::string& path_image);

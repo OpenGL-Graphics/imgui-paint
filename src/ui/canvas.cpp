@@ -20,6 +20,7 @@ std::array<GLuint, 2> Canvas::callback_data;
 /* Canvas showing image */
 Canvas::Canvas():
   m_image("./assets/images/nature.png", false),
+  // m_image("./assets/images/fruits.png", false),
   m_texture(m_image, GL_TEXTURE0, Wrapping::BLACK),
 
   m_programs{
@@ -159,12 +160,17 @@ void Canvas::render_image(float y_offset) {
 
 /* Draw circle at mouse cursor click position with OpenCV */
 void Canvas::draw_circle() {
+  Mouse::click_mode = ClickMode::NONE;
   float y_offset = Size::menu.y + Size::toolbar.y;
   ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
   std::cout << "x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
 
-  // draw circle with Cairo instead of OpenCV (better quality with vectors)
+  // cairo surface from image
   ImageVector image_vector(m_image);
+  if (image_vector.has_failed())
+    return;
+
+  // draw circle with Cairo instead of OpenCV (better quality with vectors)
   image_vector.draw_circle(position_mouse_img.x, position_mouse_img.y);
   std::string path_image_out = "/tmp/image.png";
   image_vector.save(path_image_out);
@@ -176,7 +182,6 @@ void Canvas::draw_circle() {
 
   // copy resulting image to gpu tetxure
   m_texture.set_image(m_image);
-  Mouse::click_mode = ClickMode::NONE;
 }
 
 /* Change image opened in canvas to given `path_image` */

@@ -84,18 +84,15 @@ void Toolbar::render() {
       ImGui::SetTooltip("Zoom out");
   ImGui::SameLine(5 * (2*size_font + 1)); // relative to window left corner
 
-  // toolbar button disabled if already in right mode
-  if (Mouse::click_mode == ClickMode::DRAW_CIRCLE)
-    ImGui::BeginDisabled(true);
-
+  // toolbar button disabled if already in right mode (https://github.com/ocornut/imgui/issues/5011)
+  ImGui::BeginDisabled(Mouse::click_mode == ClickMode::DRAW_CIRCLE);
   if (ImGui::Button(ICON_FA_CIRCLE, { 2*size_font, -1.0f })) {
     Mouse::click_mode = ClickMode::DRAW_CIRCLE;
   }
-  if (ImGui::IsItemHovered())
-      ImGui::SetTooltip("Draw circle");
+  ImGui::EndDisabled();
 
-  if (Mouse::click_mode == ClickMode::DRAW_CIRCLE)
-    ImGui::EndDisabled();
+  if (ImGui::IsItemHovered())
+    ImGui::SetTooltip("Draw circle");
 
   ImGui::SameLine(6 * (2*size_font + 1)); // relative to window left corner
 
