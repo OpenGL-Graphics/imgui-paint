@@ -1,7 +1,7 @@
 #include "imgui/imgui.h"
 
 #include "ui/menu.hpp"
-#include "ui/constants/mouse.hpp"
+#include "ui/toolbar.hpp"
 #include "ui/constants/size.hpp"
 
 /* static members definition (avoids linking error) & initialization */
@@ -65,18 +65,16 @@ void Menu::render() {
 
     // disable menu items if already in 'draw' mode
     if (ImGui::BeginMenu("Draw")) {
-      if (Mouse::click_mode == ClickMode::DRAW_CIRCLE)
-        ImGui::BeginDisabled(true);
+      ImGui::BeginDisabled(Menu::draw_circle);
 
-      bool switch_draw_circle = false;
-      ImGui::MenuItem("Circle", NULL, &switch_draw_circle);
+      // tick shown when 3rd arg toggled to true (hence resetting b to false in every frame)
+      bool b = false;
+      ImGui::MenuItem("Circle", NULL, &b);
+      if (b)
+        Toolbar::draw_circle = Menu::draw_circle = true;
+
+      ImGui::EndDisabled();
       ImGui::EndMenu();
-
-      if (switch_draw_circle)
-        Mouse::click_mode = ClickMode::DRAW_CIRCLE;
-
-      if (Mouse::click_mode == ClickMode::DRAW_CIRCLE)
-        ImGui::EndDisabled();
     }
 
     Size::menu = ImGui::GetWindowSize();

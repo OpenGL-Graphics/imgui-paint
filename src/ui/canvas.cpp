@@ -5,7 +5,6 @@
 #include "ui/toolbar.hpp"
 #include "ui/menu.hpp"
 #include "ui/imgui_utils.hpp"
-#include "ui/constants/mouse.hpp"
 #include "ui/constants/size.hpp"
 #include "ui/enumerations/hover_mode.hpp"
 
@@ -140,17 +139,20 @@ void Canvas::render_image(float y_offset) {
   ImVec2 size_image = ImVec2(m_zoom * m_texture.width, m_zoom * m_texture.height);
   ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
 
-  // draw circle at mouse click position with opencv (managed by listener)
-  if (ImGui::IsItemClicked() && Mouse::click_mode == ClickMode::DRAW_CIRCLE) {
-    Toolbar::draw_circle = true;
-    Menu::draw_circle = true;
+  // draw circle/line at mouse click position with Cairo (managed by listener)
+  if (ImGui::IsItemClicked()) {
+    if (Menu::draw_circle || Toolbar::draw_circle) {
+      draw_circle();
+      Menu::draw_circle = false;
+      Toolbar::draw_circle = false;
+    }
   }
 
   // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986) or pixel value accord. to toolbar radio button
   if (ImGui::IsItemHovered()) {
-    if (Mouse::hover_mode == HoverMode::IMAGE_SUBSET) {
+    if (Toolbar::hover_mode == HoverMode::IMAGE_SUBSET) {
       m_tooltip_image.render(y_offset, m_zoom);
-    } else if (Mouse::hover_mode == HoverMode::PIXEL_VALUE) {
+    } else if (Toolbar::hover_mode == HoverMode::PIXEL_VALUE) {
       m_tooltip_pixel.render(y_offset);
     }
   }
@@ -158,9 +160,8 @@ void Canvas::render_image(float y_offset) {
   unuse_shader();
 }
 
-/* Draw circle at mouse cursor click position with OpenCV */
+/* Draw circle at mouse cursor click position with Cairo */
 void Canvas::draw_circle() {
-  Mouse::click_mode = ClickMode::NONE;
   float y_offset = Size::menu.y + Size::toolbar.y;
   ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
   std::cout << "x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
@@ -170,7 +171,7 @@ void Canvas::draw_circle() {
   if (image_vector.has_failed())
     return;
 
-  // draw circle with Cairo instead of OpenCV (better quality with vectors)
+  // draw circle with Cairo (instead of OpenCV => better quality with vectors)
   image_vector.draw_circle(position_mouse_img.x, position_mouse_img.y);
   std::string path_image_out = "/tmp/image.png";
   image_vector.save(path_image_out);

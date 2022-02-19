@@ -5,8 +5,8 @@
 #include "IconsFontAwesome5.h"
 #include "ui/toolbar.hpp"
 #include "ui/menu.hpp"
-#include "ui/constants/mouse.hpp"
 #include "ui/constants/size.hpp"
+#include "ui/enumerations/hover_mode.hpp"
 
 /* static members definition (avoids linking error) & initialization */
 bool Toolbar::open_image = false;
@@ -15,6 +15,9 @@ bool Toolbar::quit_app = false;
 bool Toolbar::zoom_in = false;
 bool Toolbar::zoom_out = false;
 bool Toolbar::draw_circle = false;
+
+// radio button (0: none, 1: image subset, 2: pixel value)
+int Toolbar::hover_mode = HoverMode::NONE;
 
 Toolbar::Toolbar()
 {
@@ -85,9 +88,10 @@ void Toolbar::render() {
   ImGui::SameLine(5 * (2*size_font + 1)); // relative to window left corner
 
   // toolbar button disabled if already in right mode (https://github.com/ocornut/imgui/issues/5011)
-  ImGui::BeginDisabled(Mouse::click_mode == ClickMode::DRAW_CIRCLE);
+  ImGui::BeginDisabled(Toolbar::draw_circle);
   if (ImGui::Button(ICON_FA_CIRCLE, { 2*size_font, -1.0f })) {
-    Mouse::click_mode = ClickMode::DRAW_CIRCLE;
+    Toolbar::draw_circle = true;
+    Menu::draw_circle = true;
   }
   ImGui::EndDisabled();
 
@@ -96,20 +100,34 @@ void Toolbar::render() {
 
   ImGui::SameLine(6 * (2*size_font + 1)); // relative to window left corner
 
+  /*
+  // toolbar button disabled if already in right mode (https://github.com/ocornut/imgui/issues/5011)
+  ImGui::BeginDisabled(Mouse::click_mode == ClickMode::DRAW_LINE);
+  if (ImGui::Button(ICON_FA_PEN, { 2*size_font, -1.0f })) {
+    Mouse::click_mode = ClickMode::DRAW_LINE;
+  }
+  ImGui::EndDisabled();
+
+  if (ImGui::IsItemHovered())
+    ImGui::SetTooltip("Draw line");
+
+  ImGui::SameLine(7 * (2*size_font + 1)); // relative to window left corner
+  */
+
   // radio buttons for what to show on image hover (imgui_demo.cpp:560)
   // compile-time casting between pointer types works with reinterpret_cast (not with static_cast)
   ImGui::SetCursorPos({ ImGui::GetCursorPosX(), size_font/2.0f - 3.0f });
-  ImGui::RadioButton("None", reinterpret_cast<int *>(&Mouse::hover_mode), static_cast<int>(HoverMode::NONE));
+  ImGui::RadioButton("None", &Toolbar::hover_mode, HoverMode::NONE);
   if (ImGui::IsItemHovered())
       ImGui::SetTooltip("Show nothing on hover");
   ImGui::SameLine();
 
-  ImGui::RadioButton("Image subset", reinterpret_cast<int *>(&Mouse::hover_mode), static_cast<int>(HoverMode::IMAGE_SUBSET));
+  ImGui::RadioButton("Image subset", &Toolbar::hover_mode, HoverMode::IMAGE_SUBSET);
   if (ImGui::IsItemHovered())
       ImGui::SetTooltip("Show image subset on hover");
   ImGui::SameLine();
 
-  ImGui::RadioButton("Pixel value", reinterpret_cast<int *>(&Mouse::hover_mode), static_cast<int>(HoverMode::PIXEL_VALUE));
+  ImGui::RadioButton("Pixel value", &Toolbar::hover_mode, HoverMode::PIXEL_VALUE);
   if (ImGui::IsItemHovered())
       ImGui::SetTooltip("Show hovered pixel value");
 

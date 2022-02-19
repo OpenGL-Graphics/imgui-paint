@@ -25,7 +25,6 @@ void ListenerCanvas::handle_all() {
   on_view_monochrome();
   on_zoom_in();
   on_zoom_out();
-  on_draw_circle();
 }
 
 /* Open a new image */
@@ -132,13 +131,5 @@ void ListenerCanvas::on_zoom_out() {
     m_canvas->zoom_out();
     Menu::zoom_out = false;
     Toolbar::zoom_out = false;
-  }
-}
-
-void ListenerCanvas::on_draw_circle() {
-  if (Menu::draw_circle || Toolbar::draw_circle) {
-    m_canvas->draw_circle();
-    Menu::draw_circle = false;
-    Toolbar::draw_circle = false;
   }
 }
