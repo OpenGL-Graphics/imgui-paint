@@ -9,7 +9,7 @@ struct Toolbar {
    */
   static bool open_image, save_image, quit_app;
   static bool zoom_in, zoom_out;
-  static bool draw_circle;
+  static bool draw_circle, draw_line;
   static int hover_mode;
 
   Toolbar();

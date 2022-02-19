@@ -41,6 +41,13 @@ void ImageVector::draw_circle(double x, double y) {
   cairo_fill(m_context);
 }
 
+/* Draw line from starting point defined in `start_line()` to given point */
+void ImageVector::draw_line(double x_start, double y_start, double x_end, double y_end) {
+  cairo_move_to(m_context, x_start, y_start);
+  cairo_line_to(m_context, x_end, y_end);
+  cairo_stroke(m_context);
+}
+
 /**
  * Save modified image to temporary file
  * in-memory image data has a different format from Cairo surface's (alpha channel at beginning, stride, pre-multiplied alpha)

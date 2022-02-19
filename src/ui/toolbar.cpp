@@ -15,6 +15,7 @@ bool Toolbar::quit_app = false;
 bool Toolbar::zoom_in = false;
 bool Toolbar::zoom_out = false;
 bool Toolbar::draw_circle = false;
+bool Toolbar::draw_line = false;
 
 // radio button (0: none, 1: image subset, 2: pixel value)
 int Toolbar::hover_mode = HoverMode::NONE;
@@ -100,11 +101,11 @@ void Toolbar::render() {
 
   ImGui::SameLine(6 * (2*size_font + 1)); // relative to window left corner
 
-  /*
   // toolbar button disabled if already in right mode (https://github.com/ocornut/imgui/issues/5011)
-  ImGui::BeginDisabled(Mouse::click_mode == ClickMode::DRAW_LINE);
+  ImGui::BeginDisabled(Toolbar::draw_line);
   if (ImGui::Button(ICON_FA_PEN, { 2*size_font, -1.0f })) {
-    Mouse::click_mode = ClickMode::DRAW_LINE;
+    Toolbar::draw_line = true;
+    Menu::draw_line = true;
   }
   ImGui::EndDisabled();
 
@@ -112,7 +113,6 @@ void Toolbar::render() {
     ImGui::SetTooltip("Draw line");
 
   ImGui::SameLine(7 * (2*size_font + 1)); // relative to window left corner
-  */
 
   // radio buttons for what to show on image hover (imgui_demo.cpp:560)
   // compile-time casting between pointer types works with reinterpret_cast (not with static_cast)

@@ -32,7 +32,10 @@ Canvas::Canvas():
   m_program(&m_programs.at("color")),
   m_zoom(1.0f),
   m_tooltip_image(m_texture),
-  m_tooltip_pixel(m_image)
+  m_tooltip_pixel(m_image),
+
+  // line's starting point not set yet
+  m_cursor(VECTOR_UNSET)
 {
   // vertex or fragment shaders failed to compile
   if (m_program->has_failed()) {
@@ -142,9 +145,22 @@ void Canvas::render_image(float y_offset) {
   // draw circle/line at mouse click position with Cairo (managed by listener)
   if (ImGui::IsItemClicked()) {
     if (Menu::draw_circle || Toolbar::draw_circle) {
-      draw_circle();
+      draw("circle");
       Menu::draw_circle = false;
       Toolbar::draw_circle = false;
+    }
+
+    // two clicks needed to draw a line (cursor saved on 1st click & reset after 2nd)
+    if (Menu::draw_line || Toolbar::draw_line) {
+      if (m_cursor.x == VECTOR_UNSET.x && m_cursor.y == VECTOR_UNSET.y) {
+        move_cursor();
+      } else {
+        draw("line");
+
+        m_cursor = VECTOR_UNSET;
+        Menu::draw_line = false;
+        Toolbar::draw_line = false;
+      }
     }
   }
 
@@ -160,19 +176,37 @@ void Canvas::render_image(float y_offset) {
   unuse_shader();
 }
 
-/* Draw circle at mouse cursor click position with Cairo */
-void Canvas::draw_circle() {
+/* Define line's start point */
+void Canvas::move_cursor() {
   float y_offset = Size::menu.y + Size::toolbar.y;
   ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
-  std::cout << "x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
+  std::cout << "Line start point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
+
+  m_cursor = position_mouse_img;
+}
+
+/**
+ * Same function used to draw with Cairo a:
+ * - circle at mouse cursor click position
+ * - line starting from `m_cursor` (defined on 1st click in `move_cursor()`) to mouse 2nd click position
+ * @param type_shape 'circle' or 'line'
+ */
+void Canvas::draw(const std::string& type_shape) {
+  float y_offset = Size::menu.y + Size::toolbar.y;
+  ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
+  std::cout << "Line end point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
 
   // cairo surface from image
   ImageVector image_vector(m_image);
   if (image_vector.has_failed())
     return;
 
-  // draw circle with Cairo (instead of OpenCV => better quality with vectors)
-  image_vector.draw_circle(position_mouse_img.x, position_mouse_img.y);
+  // draw line/circle with Cairo (instead of OpenCV => better quality with vectors)
+  if (type_shape == "circle") {
+    image_vector.draw_circle(position_mouse_img.x, position_mouse_img.y);
+  } else if (type_shape == "line") {
+    image_vector.draw_line(m_cursor.x, m_cursor.y, position_mouse_img.x, position_mouse_img.y);
+  }
   std::string path_image_out = "/tmp/image.png";
   image_vector.save(path_image_out);
   image_vector.free();

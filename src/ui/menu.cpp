@@ -25,6 +25,7 @@ bool Menu::zoom_out = false;
 
 // menu Draw
 bool Menu::draw_circle = false;
+bool Menu::draw_line = false;
 
 Menu::Menu()
 {
@@ -63,17 +64,18 @@ void Menu::render() {
       ImGui::EndMenu();
     }
 
-    // disable menu items if already in 'draw' mode
+    // disable menu items if already in 'draw circle' mode
     if (ImGui::BeginMenu("Draw")) {
       ImGui::BeginDisabled(Menu::draw_circle);
-
-      // tick shown when 3rd arg toggled to true (hence resetting b to false in every frame)
-      bool b = false;
-      ImGui::MenuItem("Circle", NULL, &b);
-      if (b)
+      if (ImGui::MenuItem("Circle", NULL))
         Toolbar::draw_circle = Menu::draw_circle = true;
-
       ImGui::EndDisabled();
+
+      ImGui::BeginDisabled(Menu::draw_line);
+      if (ImGui::MenuItem("Line", NULL))
+        Toolbar::draw_line = Menu::draw_line = true;
+      ImGui::EndDisabled();
+
       ImGui::EndMenu();
     }
 
