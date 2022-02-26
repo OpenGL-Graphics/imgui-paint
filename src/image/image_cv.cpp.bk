@@ -21,8 +21,11 @@ int ImageCV::get_type_mat(int n_channels) {
   }
 }
 
-/* Draw a circle on image */
+/**
+ * Draw a circle on image
+ * TODO: Unused as it creates aliased stroked (i.e. jagged edges)
+ */
 void ImageCV::draw_circle(const cv::Point& center) {
   cv::Scalar color(0xff, 0xff, 0xff);
-  cv::circle(mat, center, 5, color);   
+  cv::circle(mat, center, 5, color);
 }

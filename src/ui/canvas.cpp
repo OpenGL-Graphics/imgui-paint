@@ -9,17 +9,20 @@
 #include "ui/enumerations/hover_mode.hpp"
 
 #include "image/image_utils.hpp"
-#include "image/image_vector.hpp"
 
 #include "shader_exception.hpp"
 
 /* Static class members require a declaration in *.cpp (to allocate space for them) or be declared as `inline` in *.hpp */
 std::array<GLuint, 2> Canvas::callback_data;
 
-/* Canvas showing image */
-Canvas::Canvas():
-  m_image("./assets/images/nature.png", false),
-  // m_image("./assets/images/fruits.png", false),
+/**
+ * Canvas showing image
+ * @param path_image Path to image to load initially
+ * TODO: remove `path_image` to start with an empty canvas
+ */
+Canvas::Canvas(const std::string path_image):
+  m_image_vector(path_image),
+  m_image(path_image, false),
   m_texture(m_image, GL_TEXTURE0, Wrapping::BLACK),
 
   m_programs{
@@ -196,24 +199,16 @@ void Canvas::draw(const std::string& type_shape) {
   ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
   std::cout << "Line end point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
 
-  // cairo surface from image
-  ImageVector image_vector(m_image);
-  if (image_vector.has_failed())
-    return;
-
-  // draw line/circle with Cairo (instead of OpenCV => better quality with vectors)
+  // draw line/circle with Cairo (instead of OpenCV => anti-aliased edges by default with vectors)
   if (type_shape == "circle") {
-    image_vector.draw_circle(position_mouse_img.x, position_mouse_img.y);
+    m_image_vector.draw_circle(position_mouse_img.x, position_mouse_img.y);
   } else if (type_shape == "line") {
-    image_vector.draw_line(m_cursor.x, m_cursor.y, position_mouse_img.x, position_mouse_img.y);
+    m_image_vector.draw_line(m_cursor.x, m_cursor.y, position_mouse_img.x, position_mouse_img.y);
   }
-  std::string path_image_out = "/tmp/image.png";
-  image_vector.save(path_image_out);
-  image_vector.free();
 
-  // free previous image & set it to saved temporary file
+  // free previous image & set it from converted cairo surface
   m_image.free();
-  m_image = Image(path_image_out, false);
+  m_image.data = m_image_vector.get_data();
 
   // copy resulting image to gpu tetxure
   m_texture.set_image(m_image);
@@ -221,7 +216,11 @@ void Canvas::draw(const std::string& type_shape) {
 
 /* Change image opened in canvas to given `path_image` */
 void Canvas::change_image(const std::string& path_image) {
+  // free pixel data & cairo surface
   m_image.free();
+  m_image_vector.free();
+
+  m_image_vector = ImageVector(path_image);
   m_image = Image(path_image, false);
   m_texture.set_image(m_image);
 }
@@ -247,6 +246,8 @@ void Canvas::blur() {
 /* Free opengl texture (image holder) & shaders programs used to display it */
 void Canvas::free() {
   m_texture.free();
+  m_image_vector.free();
+
   for (auto& pair: m_programs) {
     pair.second.free();
   }

@@ -23,7 +23,8 @@ int main() {
   }
 
   // initialize window frame with imgui
-  Frame frame(window);
+  std::string path_image = "./assets/images/nature.png";
+  Frame frame(window, path_image);
 
   // main loop
   while (!window.is_closed()) {

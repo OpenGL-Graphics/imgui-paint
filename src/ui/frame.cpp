@@ -11,10 +11,10 @@
  * Window frame made with imgui
  * Inspired by: https://github.com/ocornut/imgui/blob/master/examples/example_glfw_opengl3/main.cpp
  */
-Frame::Frame(const Window& window):
+Frame::Frame(const Window& window, const std::string& path_image):
   m_window(window),
 
-  m_canvas(),
+  m_canvas(path_image),
   m_menu(),
   m_toolbar(),
 

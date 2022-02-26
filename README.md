@@ -10,6 +10,7 @@ $ git submodule update --init --recursive --remote  # also needed to get new com
 # Dependencies
 - **ImGui:** used to render UI.
 - **Cairo:** used to draw shapes on the image, and needs to be installed beforehand (see [this example][gist-cairo]).
+- **GDK:** used to convert edited Cairo image surface to pixel data before rendering (avoids costly writing to disk eachtime a shape is drawn).
 
 [gist-cairo]: https://gist.github.com/h4k1m0u/703a8c1afd4f256fd32f5446b8e6dae6
 

@@ -20,7 +20,7 @@
 /* Main ImGui window */
 class Frame {
 public:
-  Frame(const Window& window);
+  Frame(const Window& window, const std::string& path_image);
   void render();
   void free();
 

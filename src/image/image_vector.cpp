@@ -1,17 +1,26 @@
 #include <iostream>
 #include <cmath>
 
+#include <gdk-pixbuf/gdk-pixbuf.h>
+#include <gdk/gdk.h>
+
 #include "image/image_vector.hpp"
 
 /**
  * Construct a Cairo surface from provided png image
- * Tricky to convert image data to Cairo formats (ARGB) from an in-memory image (i.e. stb standard RGBA format)
- * Another block of data would need to be allocated anyway!
+ * Tricky to convert image data to Cairo formats (ARGB) from an in-memory image (i.e. unsigned char* used by stb_image)
+ * Another block of data would need to be allocated anyway! => load surface from image path
  * https://www.cairographics.org/manual/cairo-Image-Surfaces.html#cairo-format-t
+ * Note: Cairo used to draw on image instead of OpenCV, as vector strokes are anti-aliased by default (avoids jagged edges)
  */
-ImageVector::ImageVector(const Image& image) {
-  // cairo surface from png image
-  m_surface = cairo_image_surface_create_from_png(image.path.c_str());
+ImageVector::ImageVector(const std::string& path_image) {
+  // cairo surface from image's path
+  m_surface = cairo_image_surface_create_from_png(path_image.c_str());
+
+  if (has_failed()) {
+    std::cout << "Failed to create a Cairo surface from image" << '\n';
+    return;
+  }
 
   // create context with surface as target
   m_context = cairo_create(m_surface);
@@ -43,9 +52,25 @@ void ImageVector::draw_circle(double x, double y) {
 
 /* Draw line from starting point defined in `start_line()` to given point */
 void ImageVector::draw_line(double x_start, double y_start, double x_end, double y_end) {
+  cairo_set_source_rgb(m_context, 0.0, 0.0, 0.0);
   cairo_move_to(m_context, x_start, y_start);
   cairo_line_to(m_context, x_end, y_end);
   cairo_stroke(m_context);
+}
+
+/**
+ * Convert Cairo surface -> gdk pixbuf (pixel buffer) -> unsigned char*
+ * Note: this is used instead of saving to hdd with `ImageVector::save()` which is pricey in exec. time
+ */
+unsigned char* ImageVector::get_data() {
+  // normally caller responsible for decreasing ref. number of pixbuf, but:
+  // => SEGV (same `data` used by pixbuf & later by image texture)
+  int width = cairo_image_surface_get_width(m_surface);
+  int height = cairo_image_surface_get_height(m_surface);
+  GdkPixbuf* pixbuf = gdk_pixbuf_get_from_surface(m_surface, 0, 0, width, height);
+  guchar* data = gdk_pixbuf_get_pixels(pixbuf);
+
+  return data;
 }
 
 /**

@@ -7,6 +7,7 @@
 #include "program.hpp"
 #include "tooltips/tooltip_image.hpp"
 #include "tooltips/tooltip_pixel.hpp"
+#include "image/image_vector.hpp"
 
 /**
  * Canvas where image is displayed
@@ -15,7 +16,7 @@
  */
 class Canvas {
 public:
-  Canvas();
+  Canvas(const std::string path_image);
   void render();
   void free();
 
@@ -34,9 +35,10 @@ public:
 
 private:
   /**
-   * opened image to process
+   * opened image to process & image to draw on with Cairo
    */
   Image m_image;
+  ImageVector m_image_vector;
 
   /**
    * opengl texture for showing image
