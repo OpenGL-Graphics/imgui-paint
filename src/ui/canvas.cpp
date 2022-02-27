@@ -151,6 +151,8 @@ void Canvas::render_image(float y_offset) {
       draw("circle");
       Menu::draw_circle = false;
       Toolbar::draw_circle = false;
+
+      ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
     }
 
     // two clicks needed to draw a line (cursor saved on 1st click & reset after 2nd)
@@ -163,17 +165,23 @@ void Canvas::render_image(float y_offset) {
         m_cursor = VECTOR_UNSET;
         Menu::draw_line = false;
         Toolbar::draw_line = false;
+
+        ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
       }
     }
   }
 
-  // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986) or pixel value accord. to toolbar radio button
   if (ImGui::IsItemHovered()) {
+    // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986) or pixel value accord. to toolbar radio button
     if (Toolbar::hover_mode == HoverMode::IMAGE_SUBSET) {
       m_tooltip_image.render(y_offset, m_zoom);
     } else if (Toolbar::hover_mode == HoverMode::PIXEL_VALUE) {
       m_tooltip_pixel.render(y_offset);
     }
+
+    // change to hand cursor if hovering in drawing mode
+    if (Menu::draw_circle || Toolbar::draw_circle || Menu::draw_line || Toolbar::draw_line)
+      ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
   }
 
   unuse_shader();
