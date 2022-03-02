@@ -1,4 +1,4 @@
-#include "ui/constants/size.hpp"
+#include "ui/globals/size.hpp"
 
 /* Static member requires a separate definition (avoids linking errors) */
 ImVec2 Size::menu = ImVec2(0.0f, 0.0f);

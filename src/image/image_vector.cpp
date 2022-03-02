@@ -39,22 +39,22 @@ bool ImageVector::has_failed() {
  * Draw filled circle on image
  * Better quality with Cairo compared to OpenCV (thanks to vectors)
  */
-void ImageVector::draw_circle(double x, double y) {
+void ImageVector::draw_circle(const ImVec2& center, const ImVec4& color_stroke, const ImVec4& color_fill) {
   // circle outlines
-  cairo_set_source_rgb(m_context, 0.0, 0.0, 1.0);
-  cairo_arc(m_context, x, y, 5.0, 0.0, 2*M_PI);
+  cairo_set_source_rgb(m_context, color_stroke.x, color_stroke.y, color_stroke.z);
+  cairo_arc(m_context, center.x, center.y, 5.0, 0.0, 2*M_PI);
   cairo_stroke_preserve(m_context);
 
   // fill drawn circle outlines
-  cairo_set_source_rgb(m_context, 0.0, 1.0, 1.0);
+  cairo_set_source_rgb(m_context, color_fill.x, color_fill.y, color_fill.z);
   cairo_fill(m_context);
 }
 
 /* Draw line from starting point defined in `start_line()` to given point */
-void ImageVector::draw_line(double x_start, double y_start, double x_end, double y_end) {
-  cairo_set_source_rgb(m_context, 0.0, 0.0, 0.0);
-  cairo_move_to(m_context, x_start, y_start);
-  cairo_line_to(m_context, x_end, y_end);
+void ImageVector::draw_line(const ImVec2& point_start, const ImVec2& point_end, const ImVec4& color) {
+  cairo_set_source_rgb(m_context, color.x, color.y, color.z);
+  cairo_move_to(m_context, point_start.x, point_start.y);
+  cairo_line_to(m_context, point_end.x, point_end.y);
   cairo_stroke(m_context);
 }
 

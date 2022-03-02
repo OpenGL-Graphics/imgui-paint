@@ -2,7 +2,7 @@
 
 #include "ui/menu.hpp"
 #include "ui/toolbar.hpp"
-#include "ui/constants/size.hpp"
+#include "ui/globals/size.hpp"
 
 /* static members definition (avoids linking error) & initialization */
 // menu File

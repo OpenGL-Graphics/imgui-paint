@@ -5,8 +5,10 @@
 #include "ui/toolbar.hpp"
 #include "ui/menu.hpp"
 #include "ui/imgui_utils.hpp"
-#include "ui/constants/size.hpp"
 #include "ui/enumerations/hover_mode.hpp"
+
+#include "ui/globals/size.hpp"
+#include "ui/globals/color.hpp"
 
 #include "image/image_utils.hpp"
 
@@ -209,9 +211,9 @@ void Canvas::draw(const std::string& type_shape) {
 
   // draw line/circle with Cairo (instead of OpenCV => anti-aliased edges by default with vectors)
   if (type_shape == "circle") {
-    m_image_vector.draw_circle(position_mouse_img.x, position_mouse_img.y);
+    m_image_vector.draw_circle(position_mouse_img, Color::stroke, Color::fill);
   } else if (type_shape == "line") {
-    m_image_vector.draw_line(m_cursor.x, m_cursor.y, position_mouse_img.x, position_mouse_img.y);
+    m_image_vector.draw_line(m_cursor, position_mouse_img, Color::stroke);
   }
 
   // free previous image & set it from converted cairo surface

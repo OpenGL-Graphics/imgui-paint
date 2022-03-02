@@ -5,8 +5,10 @@
 #include "IconsFontAwesome5.h"
 #include "ui/toolbar.hpp"
 #include "ui/menu.hpp"
-#include "ui/constants/size.hpp"
 #include "ui/enumerations/hover_mode.hpp"
+
+#include "ui/globals/size.hpp"
+#include "ui/globals/color.hpp"
 
 /* static members definition (avoids linking error) & initialization */
 bool Toolbar::open_image = false;
@@ -130,6 +132,11 @@ void Toolbar::render() {
   ImGui::RadioButton("Pixel value", &Toolbar::hover_mode, HoverMode::PIXEL_VALUE);
   if (ImGui::IsItemHovered())
       ImGui::SetTooltip("Show hovered pixel value");
+  ImGui::SameLine();
+
+  ImGui::ColorEdit3("ColorStroke", (float*) &Color::stroke, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+  ImGui::SameLine();
+  ImGui::ColorEdit3("ColorFill", (float*) &Color::fill, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
 
   ImGui::End();
 }

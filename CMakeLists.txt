@@ -46,7 +46,7 @@ file(GLOB SRC
   "src/ui/enumerations/*.cpp"
   "src/ui/tooltips/*.cpp"
   "src/ui/listeners/*.cpp"
-  "src/ui/constants/*.cpp"
+  "src/ui/globals/*.cpp"
   "src/image/*.cpp"
   "src/fonts/*.cpp"
   "src/profiling/*.cpp"
