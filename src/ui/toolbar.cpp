@@ -18,6 +18,7 @@ bool Toolbar::zoom_in = false;
 bool Toolbar::zoom_out = false;
 bool Toolbar::draw_circle = false;
 bool Toolbar::draw_line = false;
+bool Toolbar::brush = false;
 
 // radio button (0: none, 1: image subset, 2: pixel value)
 int Toolbar::hover_mode = HoverMode::NONE;
@@ -40,7 +41,7 @@ void Toolbar::render() {
   // change background color to button color
   ImGuiStyle style = ImGui::GetStyle();
   ImVec4 color_button = style.Colors[ImGuiCol_Button];
-  ImGui::PushStyleColor(ImGuiCol_WindowBg, ImGui::ColorConvertFloat4ToU32(color_button));
+  ImGui::PushStyleColor(ImGuiCol_WindowBg, color_button);
 
   // anchored imgui window of specified size without padding
   ImGui::SetNextWindowPos({ 0.0f, Size::menu.y });
@@ -93,10 +94,8 @@ void Toolbar::render() {
 
   // toolbar button disabled if already in right mode (https://github.com/ocornut/imgui/issues/5011)
   ImGui::BeginDisabled(Toolbar::draw_circle);
-  if (ImGui::Button(ICON_FA_CIRCLE, { 2*size_font, -1.0f })) {
-    Toolbar::draw_circle = true;
-    Menu::draw_circle = true;
-  }
+  if (ImGui::Button(ICON_FA_CIRCLE, { 2*size_font, -1.0f }))
+    Toolbar::draw_circle = Menu::draw_circle = true;
   ImGui::EndDisabled();
 
   if (ImGui::IsItemHovered())
@@ -105,15 +104,22 @@ void Toolbar::render() {
 
   // toolbar button disabled if already in right mode (https://github.com/ocornut/imgui/issues/5011)
   ImGui::BeginDisabled(Toolbar::draw_line);
-  if (ImGui::Button(ICON_FA_PEN, { 2*size_font, -1.0f })) {
-    Toolbar::draw_line = true;
-    Menu::draw_line = true;
-  }
+  if (ImGui::Button(ICON_FA_PEN, { 2*size_font, -1.0f }))
+    Toolbar::draw_line = Menu::draw_line = true;
   ImGui::EndDisabled();
 
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("Draw line");
-  // ImGui::SameLine(7 * (2*size_font + 1)); // relative to window left corner
+  ImGui::SameLine(0, 1); // offset=0: pos. right after previous item, spacing=1px
+
+  // change color for toolbar button if in right mode
+  ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[Menu::brush ? ImGuiCol_ButtonActive : ImGuiCol_Button]);
+  if (ImGui::Button(ICON_FA_PAINT_BRUSH, { 2*size_font, -1.0f }))
+    Toolbar::brush = Menu::brush = !Menu::brush;
+  ImGui::PopStyleColor();
+
+  if (ImGui::IsItemHovered())
+    ImGui::SetTooltip("Brush tool");
   ImGui::SameLine(0, 1); // offset=0: pos. right after previous item, spacing=1px
 
   // radio buttons for what to show on image hover (imgui_demo.cpp:560)

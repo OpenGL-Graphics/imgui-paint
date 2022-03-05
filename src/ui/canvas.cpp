@@ -149,7 +149,7 @@ void Canvas::render_image(float y_offset) {
 
   // draw circle/line at mouse click position with Cairo (managed by listener)
   if (ImGui::IsItemClicked()) {
-    if (Menu::draw_circle || Toolbar::draw_circle) {
+    if (Toolbar::draw_circle) {
       draw("circle");
       Menu::draw_circle = false;
       Toolbar::draw_circle = false;
@@ -158,7 +158,7 @@ void Canvas::render_image(float y_offset) {
     }
 
     // two clicks needed to draw a line (cursor saved on 1st click & reset after 2nd)
-    if (Menu::draw_line || Toolbar::draw_line) {
+    if (Toolbar::draw_line) {
       if (m_cursor.x == VECTOR_UNSET.x && m_cursor.y == VECTOR_UNSET.y) {
         move_cursor();
       } else {
@@ -173,6 +173,13 @@ void Canvas::render_image(float y_offset) {
     }
   }
 
+  // brush tool paints while LMB dragged
+  // https://github.com/ocornut/imgui/issues/493
+  if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
+    if (Toolbar::brush)
+      draw("circle", false);
+  }
+
   if (ImGui::IsItemHovered()) {
     // show tooltip containing zoomed subset image (source: imgui_demo.cpp:986) or pixel value accord. to toolbar radio button
     if (Toolbar::hover_mode == HoverMode::IMAGE_SUBSET) {
@@ -182,7 +189,7 @@ void Canvas::render_image(float y_offset) {
     }
 
     // change to hand cursor if hovering in drawing mode
-    if (Menu::draw_circle || Toolbar::draw_circle || Menu::draw_line || Toolbar::draw_line)
+    if (Toolbar::draw_circle || Toolbar::draw_line || Toolbar::brush)
       ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
   }
 
@@ -204,16 +211,16 @@ void Canvas::move_cursor() {
  * - line starting from `m_cursor` (defined on 1st click in `move_cursor()`) to mouse 2nd click position
  * @param type_shape 'circle' or 'line'
  */
-void Canvas::draw(const std::string& type_shape) {
+void Canvas::draw(const std::string& type_shape, bool has_strokes) {
   float y_offset = Size::menu.y + Size::toolbar.y;
   ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
-  std::cout << "Line end point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
 
   // draw line/circle with Cairo (instead of OpenCV => anti-aliased edges by default with vectors)
   if (type_shape == "circle") {
-    m_image_vector.draw_circle(position_mouse_img, Color::stroke, Color::fill);
+    m_image_vector.draw_circle(position_mouse_img, has_strokes);
   } else if (type_shape == "line") {
-    m_image_vector.draw_line(m_cursor, position_mouse_img, Color::stroke);
+    std::cout << "Line end point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
+    m_image_vector.draw_line(m_cursor, position_mouse_img);
   }
 
   // free previous image & set it from converted cairo surface

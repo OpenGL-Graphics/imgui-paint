@@ -26,6 +26,7 @@ bool Menu::zoom_out = false;
 // menu Draw
 bool Menu::draw_circle = false;
 bool Menu::draw_line = false;
+bool Menu::brush = false;
 
 Menu::Menu()
 {
@@ -64,7 +65,7 @@ void Menu::render() {
       ImGui::EndMenu();
     }
 
-    // disable menu items if already in 'draw circle' mode
+    // disable menu items if already in right draw mode
     if (ImGui::BeginMenu("Draw")) {
       ImGui::BeginDisabled(Menu::draw_circle);
       if (ImGui::MenuItem("Circle", NULL))
@@ -75,6 +76,9 @@ void Menu::render() {
       if (ImGui::MenuItem("Line", NULL))
         Toolbar::draw_line = Menu::draw_line = true;
       ImGui::EndDisabled();
+
+      ImGui::MenuItem("Paint", NULL, &Menu::brush);
+      Toolbar::brush = Menu::brush;
 
       ImGui::EndMenu();
     }

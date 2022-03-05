@@ -31,7 +31,7 @@ public:
   void zoom_out();
 
   void move_cursor();
-  void draw(const std::string& type_shape);
+  void draw(const std::string& type_shape, bool has_strokes=true);
 
 private:
   /**
