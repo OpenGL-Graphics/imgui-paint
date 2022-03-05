@@ -47,48 +47,49 @@ void Toolbar::render() {
   ImGui::SetNextWindowSize(Size::toolbar);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
   bool p_open;
-  ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize;
+  ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize |
+                                  ImGuiWindowFlags_NoScrollbar |ImGuiWindowFlags_NoScrollWithMouse;
   ImGui::Begin("Toolbar", &p_open, window_flags);
 
   // avoids applying same style to subsequent windows (& to button tooltips)
   ImGui::PopStyleVar(1);
   ImGui::PopStyleColor();
 
-  // buttons on same line & filling all vertical space
+  // buttons on same line & filling all vertical space (hence height = -1)
   if (ImGui::Button(ICON_FA_FOLDER_OPEN, { 2*size_font, -1.0f })) {
     Toolbar::open_image = true;
   }
   if (ImGui::IsItemHovered())
       ImGui::SetTooltip("Open image");
-  ImGui::SameLine(2*size_font + 1); // relative to window left corner
+  ImGui::SameLine(0, 1); // offset=0: right after previous item, spacing=1px
 
   if (ImGui::Button(ICON_FA_SAVE, { 2*size_font, -1.0f })) {
     Toolbar::save_image = true;
   }
   if (ImGui::IsItemHovered())
       ImGui::SetTooltip("Save image");
-  ImGui::SameLine(2 * (2*size_font + 1)); // relative to window left corner
+  ImGui::SameLine(0, 1); // offset=0: right after previous item, spacing=1px
 
   if (ImGui::Button(ICON_FA_WINDOW_CLOSE, { 2*size_font, -1.0f })) {
     Toolbar::quit_app = true;
   }
   if (ImGui::IsItemHovered())
       ImGui::SetTooltip("Quit");
-  ImGui::SameLine(3 * (2*size_font + 1)); // relative to window left corner
+  ImGui::SameLine(0, 1); // offset=0: right after previous item, spacing=1px
 
   if (ImGui::Button(ICON_FA_PLUS_CIRCLE, { 2*size_font, -1.0f })) {
     Toolbar::zoom_in = true;
   }
   if (ImGui::IsItemHovered())
       ImGui::SetTooltip("Zoom in");
-  ImGui::SameLine(4 * (2*size_font + 1)); // relative to window left corner
+  ImGui::SameLine(0, 1); // offset=0: right after previous item, spacing=1px
 
   if (ImGui::Button(ICON_FA_MINUS_CIRCLE, { 2*size_font, -1.0f })) {
     Toolbar::zoom_out = true;
   }
   if (ImGui::IsItemHovered())
       ImGui::SetTooltip("Zoom out");
-  ImGui::SameLine(5 * (2*size_font + 1)); // relative to window left corner
+  ImGui::SameLine(0, 1); // offset=0: right after previous item, spacing=1px
 
   // toolbar button disabled if already in right mode (https://github.com/ocornut/imgui/issues/5011)
   ImGui::BeginDisabled(Toolbar::draw_circle);
@@ -100,8 +101,7 @@ void Toolbar::render() {
 
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("Draw circle");
-
-  ImGui::SameLine(6 * (2*size_font + 1)); // relative to window left corner
+  ImGui::SameLine(0, 1); // offset=0: right after previous item, spacing=1px
 
   // toolbar button disabled if already in right mode (https://github.com/ocornut/imgui/issues/5011)
   ImGui::BeginDisabled(Toolbar::draw_line);
@@ -113,8 +113,8 @@ void Toolbar::render() {
 
   if (ImGui::IsItemHovered())
     ImGui::SetTooltip("Draw line");
-
-  ImGui::SameLine(7 * (2*size_font + 1)); // relative to window left corner
+  // ImGui::SameLine(7 * (2*size_font + 1)); // relative to window left corner
+  ImGui::SameLine(0, 1); // offset=0: pos. right after previous item, spacing=1px
 
   // radio buttons for what to show on image hover (imgui_demo.cpp:560)
   // compile-time casting between pointer types works with reinterpret_cast (not with static_cast)
@@ -132,11 +132,19 @@ void Toolbar::render() {
   ImGui::RadioButton("Pixel value", &Toolbar::hover_mode, HoverMode::PIXEL_VALUE);
   if (ImGui::IsItemHovered())
       ImGui::SetTooltip("Show hovered pixel value");
-  ImGui::SameLine();
 
-  ImGui::ColorEdit3("ColorStroke", (float*) &Color::stroke, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
-  ImGui::SameLine();
-  ImGui::ColorEdit3("ColorFill", (float*) &Color::fill, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+  // right alignment: https://github.com/ocornut/imgui/issues/934#issuecomment-340231002
+  const float itemSpacing = ImGui::GetStyle().ItemSpacing.x;
+  static float widthStrokeColor = 100.0f;
+  ImGui::SameLine(ImGui::GetWindowWidth() - widthStrokeColor - itemSpacing); // offset <> 0: pos. relative to window-left corner
+  ImGui::ColorEdit3("ColorStroke", (float*) &Color::stroke, ImGuiColorEditFlags_NoInputs);
+  widthStrokeColor = ImGui::GetItemRectSize().x;
+
+  // right alignment: https://github.com/ocornut/imgui/issues/934#issuecomment-340231002
+  static float widthFillColor = 100.0f;
+  ImGui::SameLine(ImGui::GetWindowWidth() - widthStrokeColor - widthFillColor - 2*itemSpacing); // offset <> 0: pos. relative to window-left corner
+  ImGui::ColorEdit3("ColorFill", (float*) &Color::fill, ImGuiColorEditFlags_NoInputs);
+  widthFillColor = ImGui::GetItemRectSize().x;
 
   ImGui::End();
 }
