@@ -38,6 +38,11 @@ int main() {
     // process events & show rendered buffer
     window.process_events();
     window.render();
+
+    /*
+    float fps = ImGui::GetIO().Framerate;
+    std::cout << "fps: " << fps << '\n';
+    */
   }
 
   // destroy imgui

@@ -40,9 +40,9 @@ bool ImageVector::has_failed() {
  * Draw filled circle on image
  * Better quality with Cairo compared to OpenCV (thanks to vectors)
  */
-void ImageVector::draw_circle(const ImVec2& center, bool has_strokes) {
+void ImageVector::draw_circle(const ImVec2& center, float radius, bool has_strokes) {
   // circle outlines
-  cairo_arc(m_context, center.x, center.y, 5.0, 0.0, 2*M_PI);
+  cairo_arc(m_context, center.x, center.y, radius, 0.0, 2*M_PI);
   if (has_strokes) {
     cairo_set_source_rgb(m_context, Color::stroke.x, Color::stroke.y, Color::stroke.z);
     cairo_stroke_preserve(m_context);
@@ -72,6 +72,19 @@ unsigned char* ImageVector::get_data() {
   int height = cairo_image_surface_get_height(m_surface);
   GdkPixbuf* pixbuf = gdk_pixbuf_get_from_surface(m_surface, 0, 0, width, height);
   guchar* data = gdk_pixbuf_get_pixels(pixbuf);
+
+  return data;
+}
+
+/**
+ * Get only subset of data from Cairo surface
+ * Return modified image subset to make Brush tool more fluid without discontinuities
+ */
+unsigned char* ImageVector::get_subdata(const ImVec2& size, const ImVec2& offset) {
+  // https://docs.gtk.org/gdk3/func.pixbuf_get_from_surface.html
+  GdkPixbuf* pixbuf = gdk_pixbuf_get_from_surface(m_surface, offset.x, offset.y, size.x, size.y);
+  guchar* data = gdk_pixbuf_get_pixels(pixbuf);
+  g_object_unref(pixbuf);
 
   return data;
 }

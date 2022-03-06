@@ -13,6 +13,7 @@
 #include "image/image_utils.hpp"
 
 #include "shader_exception.hpp"
+#include "profiling/profiler.hpp"
 
 /* Static class members require a declaration in *.cpp (to allocate space for them) or be declared as `inline` in *.hpp */
 std::array<GLuint, 2> Canvas::callback_data;
@@ -214,21 +215,43 @@ void Canvas::move_cursor() {
 void Canvas::draw(const std::string& type_shape, bool has_strokes) {
   float y_offset = Size::menu.y + Size::toolbar.y;
   ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
+  ImVec2 size, offset;
 
   // draw line/circle with Cairo (instead of OpenCV => anti-aliased edges by default with vectors)
+  // TODO: Both line & circle strokes are cut at top-left bcos of Cairo (=> enlarge crop rectangle)
   if (type_shape == "circle") {
-    m_image_vector.draw_circle(position_mouse_img, has_strokes);
+    float radius = 5.0f;
+    m_image_vector.draw_circle(position_mouse_img, radius, has_strokes);
+
+    // `+ 1` to include both extremities (see glTexSubImage2D() docs)
+    ImVec2 start_bbox( position_mouse_img.x - radius, position_mouse_img.y - radius );
+    ImVec2 end_bbox( position_mouse_img.x + radius, position_mouse_img.y + radius );
+    offset = start_bbox;
+    size = { end_bbox.x - start_bbox.x + 1, end_bbox.y - start_bbox.y + 1 };
   } else if (type_shape == "line") {
+    std::cout << "Line start point x: " << m_cursor.x << " y: " << m_cursor.y << '\n';
     std::cout << "Line end point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
     m_image_vector.draw_line(m_cursor, position_mouse_img);
+
+    // `+ 1` to include both extremities (see glTexSubImage2D() docs)
+    offset = { m_cursor.x, m_cursor.y };
+    size = { position_mouse_img.x - m_cursor.x + 1, position_mouse_img.y - m_cursor.y + 1 };
   }
 
-  // free previous image & set it from converted cairo surface
-  m_image.free();
-  m_image.data = m_image_vector.get_data();
+  // get updated subimage from converted cairo surface
+  Profiler profiler;
+  profiler.start();
+  unsigned char* subdata = m_image_vector.get_subdata(size, offset);
+  Image subimage(size.x, size.y, m_image.format, subdata, m_image.path);
+  profiler.stop();
+  profiler.print("surface -> pixbuf -> char*");
 
-  // copy resulting image to gpu tetxure
-  m_texture.set_image(m_image);
+  // copy modified sub-image to gpu texture
+  profiler.start();
+  m_texture.set_subimage(subimage, { size.x, size.y }, { offset.x, offset.y });
+  subimage.free();
+  profiler.stop();
+  profiler.print("To GPU");
 }
 
 /* Change image opened in canvas to given `path_image` */
