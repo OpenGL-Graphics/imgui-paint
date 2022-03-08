@@ -244,14 +244,14 @@ void Canvas::draw(const std::string& type_shape, bool has_strokes) {
   unsigned char* subdata = m_image_vector.get_subdata(size, offset);
   Image subimage(size.x, size.y, m_image.format, subdata, m_image.path);
   profiler.stop();
-  profiler.print("surface -> pixbuf -> char*");
+  // profiler.print("surface -> pixbuf -> char*");
 
   // copy modified sub-image to gpu texture
   profiler.start();
   m_texture.set_subimage(subimage, { size.x, size.y }, { offset.x, offset.y });
-  subimage.free();
+  m_image_vector.free_pixbuf(); // also frees image's `uchar *` data
   profiler.stop();
-  profiler.print("To GPU");
+  // profiler.print("To GPU");
 }
 
 /* Change image opened in canvas to given `path_image` */

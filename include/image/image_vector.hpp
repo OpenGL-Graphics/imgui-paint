@@ -2,6 +2,7 @@
 #define IMAGE_VECTOR_HPP
 
 #include <cairo.h>
+#include <gdk-pixbuf/gdk-pixbuf.h>
 
 #include "imgui/imgui.h"
 
@@ -19,9 +20,14 @@ public:
   unsigned char* get_data();
   unsigned char* get_subdata(const ImVec2& size, const ImVec2& offset);
 
+  void free_pixbuf();
+
 private:
   cairo_surface_t* m_surface;
   cairo_t* m_context;
+
+  /* avoids memory leak (cannot free just after getting `char*` as it'd free data too */
+  GdkPixbuf* m_pixbuf;
 };
 
 #endif // IMAGE_VECTOR_HPP

@@ -1,7 +1,6 @@
 #include <iostream>
 #include <cmath>
 
-#include <gdk-pixbuf/gdk-pixbuf.h>
 #include <gdk/gdk.h>
 
 #include "image/image_vector.hpp"
@@ -14,7 +13,9 @@
  * https://www.cairographics.org/manual/cairo-Image-Surfaces.html#cairo-format-t
  * Note: Cairo used to draw on image instead of OpenCV, as vector strokes are anti-aliased by default (avoids jagged edges)
  */
-ImageVector::ImageVector(const std::string& path_image) {
+ImageVector::ImageVector(const std::string& path_image):
+  m_pixbuf(NULL)
+{
   // cairo surface from image's path
   m_surface = cairo_image_surface_create_from_png(path_image.c_str());
 
@@ -82,11 +83,15 @@ unsigned char* ImageVector::get_data() {
  */
 unsigned char* ImageVector::get_subdata(const ImVec2& size, const ImVec2& offset) {
   // https://docs.gtk.org/gdk3/func.pixbuf_get_from_surface.html
-  GdkPixbuf* pixbuf = gdk_pixbuf_get_from_surface(m_surface, offset.x, offset.y, size.x, size.y);
-  guchar* data = gdk_pixbuf_get_pixels(pixbuf);
-  g_object_unref(pixbuf);
+  m_pixbuf = gdk_pixbuf_get_from_surface(m_surface, offset.x, offset.y, size.x, size.y);
+  guchar* data = gdk_pixbuf_get_pixels(m_pixbuf);
 
   return data;
+}
+
+/* Called just after transferring data to GPU to avoid memory leak (also frees `uchar *` data) */
+void ImageVector::free_pixbuf() {
+  g_object_unref(m_pixbuf);
 }
 
 /**
