@@ -16,6 +16,7 @@ int main() {
   window.make_context();
   if (!gladLoadGL()) {
     std::cout << "Failed to load Glad (OpenGL)" << "\n";
+    window.destroy();
     return 1;
   } else {
     std::cout << "Opengl version: " << glGetString(GL_VERSION) << "\n";
