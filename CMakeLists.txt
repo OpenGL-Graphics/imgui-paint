@@ -18,10 +18,6 @@ pkg_check_modules(GDK REQUIRED gdk-3.0)
 # copy assets folder
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 
-# glad shared library (opengl)
-add_library(glad SHARED src/glad/glad.c)
-target_include_directories(glad PUBLIC include)
-
 # imgui library (preprocessor definition to force it to use glad)
 add_compile_definitions(IMGUI_IMPL_OPENGL_LOADER_GLAD)
 file(GLOB IMGUI_SRC "src/imgui/*.cpp")
@@ -58,7 +54,6 @@ target_include_directories(main PRIVATE
   ${GDK_INCLUDE_DIRS}
 )
 target_link_libraries(main
-  glad
   imgui
   glfw_window
   opengl_shader
