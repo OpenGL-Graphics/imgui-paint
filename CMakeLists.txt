@@ -28,13 +28,20 @@ target_include_directories(imgui PUBLIC include/imgui include)
 add_library(file_dialog SHARED src/ImGuiFileDialog/ImGuiFileDialog.cpp)
 target_include_directories(file_dialog PUBLIC include/ImGuiFileDialog include/imgui)
 
-# header-only library
+# header-only font icons library
 add_library(icon_font INTERFACE)
 target_include_directories(icon_font INTERFACE include/IconFontCppHeaders)
 
-# glfw window & shader (with texture & glad) libraries from submodule
+# nanosvg shared library (prevent from loading file multiple times)
+# add_compile_definitions(NANOVG_GL3_IMPLEMENTATION)
+add_library(nanovg SHARED
+  "src/nanovg/nanovg.c"
+)
+target_include_directories(nanovg PUBLIC include/nanovg)
+
+# glfw window & opengl utils (texture, shader, fbo) libraries from submodule
 add_subdirectory(glfw-window)
-add_subdirectory(opengl-shader)
+add_subdirectory(opengl-utils)
 
 # main executable
 file(GLOB SRC
@@ -54,11 +61,13 @@ target_include_directories(main PRIVATE
   ${GDK_INCLUDE_DIRS}
 )
 target_link_libraries(main
+  nanovg
   imgui
-  glfw_window
-  opengl_shader
   file_dialog
   icon_font
   ${CAIRO_LIBRARIES}
   ${GDK_LIBRARIES}
+
+  glfw_window
+  opengl_utils
 )

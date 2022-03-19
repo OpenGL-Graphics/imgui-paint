@@ -13,7 +13,11 @@
 #include "image/image_utils.hpp"
 
 #include "shader_exception.hpp"
+#include "framebuffer_exception.hpp"
 #include "profiling/profiler.hpp"
+
+#define NANOVG_GL3_IMPLEMENTATION
+#include "nanovg_gl.h"
 
 /* Static class members require a declaration in *.cpp (to allocate space for them) or be declared as `inline` in *.hpp */
 std::array<GLuint, 2> Canvas::callback_data;
@@ -41,12 +45,31 @@ Canvas::Canvas(const std::string path_image):
   m_tooltip_pixel(m_image),
 
   // line's starting point not set yet
-  m_cursor(VECTOR_UNSET)
+  m_cursor(VECTOR_UNSET),
+
+  m_framebuffer()
 {
   // vertex or fragment shaders failed to compile
   if (m_program->has_failed()) {
     throw ShaderException();
   }
+
+  // framebuffer with empty texture attached to it
+  // nanovg vector shapes & opened image drawn on texture attached to fbo
+  // TODO: initialize m_texture with empty image of same size as m_image_vg
+  m_framebuffer.attach_texture(m_texture);
+
+  if (!m_framebuffer.is_complete()) {
+    throw FramebufferException();
+  }
+
+  // create nanovg context (similar to html5 canvas')
+  m_vg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_DEBUG);
+
+  // load image data with stb_image, create texture, copy image data to gpu texture, then free image data
+  // TODO: delete Canvas::m_image (redundant)
+  m_image_vg = nvgCreateImage(m_vg, path_image.c_str(), 0);
+  std::cout << "Nanovg image: " << m_image_vg << '\n';
 }
 
 /**
@@ -95,15 +118,51 @@ void Canvas::render() {
   float y_offset = Size::menu.y + Size::toolbar.y;
   Size::canvas = { size_display.x, size_display.y - y_offset };
 
-  // imgui window of specified size, anchored at (0, 0), & without padding
+  // imgui window of specified size, anchored at (0, 0), & without padding, no dark background overlay
   // origin at upper-left corner
   ImGui::SetNextWindowPos({ 0.0f, y_offset });
   ImGui::SetNextWindowSize(Size::canvas);
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
   ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f); // otherwise cursor coords rel. to image org starts at 1 (not 0)
   bool p_open;
-  ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize;
+  ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground;
   ImGui::Begin("Canvas", &p_open, window_flags);
+
+  // draw vector shapes & image on fbo's texture with nanovg
+  // TODO: sometimes opengl throws: `glGetError 506` (incomplete fbo)
+  {
+    float pixel_ratio = 1.0f; // framebuffer & window have same size
+    nvgBeginFrame(m_vg, Size::canvas.x, Size::canvas.y, pixel_ratio);
+
+    // clear framebuffer's attached color buffer in every frame
+    m_framebuffer.bind();
+    m_framebuffer.clear({ 0.0f, 0.0f, 0.0f, 1.0f });
+
+    // draw image on fbo's texture
+    float alpha = 1.0f;
+    float angle = 0.0f;
+    float x = 0.0f; // 200.0f;
+    float y = 0.0f; // 200.0f;
+    int width, height;
+    nvgImageSize(m_vg, m_image_vg, &width, &height);
+    NVGpaint imgPaint = nvgImagePattern(m_vg, x, y, width, height, angle, m_image_vg, alpha);
+    nvgBeginPath(m_vg);
+    nvgRect(m_vg, x, 90.f, width, height);
+    nvgFillPaint(m_vg, imgPaint);
+    nvgFill(m_vg);
+
+    // draw rectangle & circle on fbo's texture
+    nvgBeginPath(m_vg);
+    nvgRect(m_vg, 100,100, 120,30);
+    nvgCircle(m_vg, 500, 500, 100);
+    nvgFillColor(m_vg, nvgRGBA(255,192,0,255));
+    nvgFill(m_vg);
+
+    // detach framebuffer
+    m_framebuffer.unbind();
+
+    nvgEndFrame(m_vg);
+  }
 
   // render image using custom shader (for grayscale) on drawlist associated with current frame
   render_image(y_offset);
@@ -146,7 +205,7 @@ void Canvas::render_image(float y_offset) {
   // double casting avoids `warning: cast to pointer from integer of different size` i.e. smaller
   m_texture.attach();
   ImVec2 size_image = ImVec2(m_zoom * m_texture.width, m_zoom * m_texture.height);
-  ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
+  // ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
 
   // draw circle/line at mouse click position with Cairo (managed by listener)
   if (ImGui::IsItemClicked()) {
@@ -285,12 +344,21 @@ void Canvas::blur() {
 
 /* Free opengl texture (image holder) & shaders programs used to display it */
 void Canvas::free() {
-  m_texture.free();
   m_image_vector.free();
 
   for (auto& pair: m_programs) {
     pair.second.free();
   }
+
+  // destroy framebuffer & texture attached to it
+  m_texture.free();
+  m_framebuffer.free();
+
+  // delete image texture created by nanovg
+  nvgDeleteImage(m_vg, m_image_vg);
+
+  // free nanovg context
+  nvgDeleteGL3(m_vg);
 }
 
 void Canvas::zoom_in() {

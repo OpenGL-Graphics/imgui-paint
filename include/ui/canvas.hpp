@@ -4,7 +4,11 @@
 #include <string>
 
 #include "imgui.h"
+#include "nanovg.h"
+
+#include "framebuffer.hpp"
 #include "program.hpp"
+
 #include "tooltips/tooltip_image.hpp"
 #include "tooltips/tooltip_pixel.hpp"
 #include "image/image_vector.hpp"
@@ -83,6 +87,13 @@ private:
 
   /* static methods can be passed as function pointers callbacks (no `this` argument) */
   static void draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd);
+
+  /* framebuffer used to render image & shapes with nanovg on texture */
+  Framebuffer m_framebuffer;
+
+  /* nanovg context & image (opened image encapsulating opengl texture) */
+  NVGcontext* m_vg;
+  int m_image_vg;
 };
 
 #endif // CANVAS_HPP
