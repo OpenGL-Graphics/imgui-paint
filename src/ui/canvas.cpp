@@ -30,7 +30,6 @@ std::array<GLuint, 2> Canvas::callback_data;
 Canvas::Canvas(const std::string path_image):
   m_image_vector(path_image),
   m_image(path_image, false),
-  m_texture(m_image, GL_TEXTURE0, Wrapping::BLACK),
 
   m_programs{
     {"color", Program("assets/shaders/basic.vert", "assets/shaders/color.frag")},
@@ -45,22 +44,11 @@ Canvas::Canvas(const std::string path_image):
   m_tooltip_pixel(m_image),
 
   // line's starting point not set yet
-  m_cursor(VECTOR_UNSET),
-
-  m_framebuffer()
+  m_cursor(VECTOR_UNSET)
 {
   // vertex or fragment shaders failed to compile
   if (m_program->has_failed()) {
     throw ShaderException();
-  }
-
-  // framebuffer with empty texture attached to it
-  // nanovg vector shapes & opened image drawn on texture attached to fbo
-  // TODO: initialize m_texture with empty image of same size as m_image_vg
-  m_framebuffer.attach_texture(m_texture);
-
-  if (!m_framebuffer.is_complete()) {
-    throw FramebufferException();
   }
 
   // create nanovg context (similar to html5 canvas')
@@ -68,8 +56,21 @@ Canvas::Canvas(const std::string path_image):
 
   // load image data with stb_image, create texture, copy image data to gpu texture, then free image data
   // TODO: delete Canvas::m_image (redundant)
-  m_image_vg = nvgCreateImage(m_vg, path_image.c_str(), 0);
-  std::cout << "Nanovg image: " << m_image_vg << '\n';
+  m_image_vg = nvgCreateImage(m_vg, path_image.c_str(), NVG_IMAGE_FLIPY);
+
+  // empty texture (same size as openend image) to fill when drawing to framebuffer
+  int width, height;
+  nvgImageSize(m_vg, m_image_vg, &width, &height);
+  Image image_framebuffer(width, height, GL_RGBA, NULL);
+  m_texture = Texture2D(image_framebuffer);
+
+  // attach empty texture to framebuffer
+  m_framebuffer.attach_texture(m_texture);
+  std::cout << std::hex << "OpenGL Error: " << glGetError() << '\n';
+
+  if (!m_framebuffer.is_complete()) {
+    throw FramebufferException();
+  }
 }
 
 /**
@@ -131,37 +132,42 @@ void Canvas::render() {
   // draw vector shapes & image on fbo's texture with nanovg
   // TODO: sometimes opengl throws: `glGetError 506` (incomplete fbo)
   {
-    float pixel_ratio = 1.0f; // framebuffer & window have same size
-    nvgBeginFrame(m_vg, Size::canvas.x, Size::canvas.y, pixel_ratio);
-
     // clear framebuffer's attached color buffer in every frame
     m_framebuffer.bind();
     m_framebuffer.clear({ 0.0f, 0.0f, 0.0f, 1.0f });
 
+    float pixel_ratio = 1.0f; // framebuffer & window have same size
+    nvgBeginFrame(m_vg, Size::canvas.x, Size::canvas.y, pixel_ratio);
+
+    // origin at lower-left corner of image (2d projection)
+    // y is offset as otherwise image will stretch till top of window (behind menu)
     // draw image on fbo's texture
     float alpha = 1.0f;
     float angle = 0.0f;
-    float x = 0.0f; // 200.0f;
-    float y = 0.0f; // 200.0f;
-    int width, height;
+    float x = 0.0f;
+    float y = 0.0f;
+    int width = m_texture.width;
+    int height = m_texture.height;
     nvgImageSize(m_vg, m_image_vg, &width, &height);
-    NVGpaint imgPaint = nvgImagePattern(m_vg, x, y, width, height, angle, m_image_vg, alpha);
+    NVGpaint imgPaint = nvgImagePattern(m_vg, x, y - y_offset, width, height - y_offset, angle, m_image_vg, alpha);
     nvgBeginPath(m_vg);
-    nvgRect(m_vg, x, 90.f, width, height);
+    nvgRect(m_vg, x, y, width, height);
     nvgFillPaint(m_vg, imgPaint);
     nvgFill(m_vg);
+    nvgClosePath(m_vg);
 
     // draw rectangle & circle on fbo's texture
     nvgBeginPath(m_vg);
-    nvgRect(m_vg, 100,100, 120,30);
-    nvgCircle(m_vg, 500, 500, 100);
+    // nvgRect(m_vg, 100,100, 120,30);
+    nvgCircle(m_vg, 100, 100, 25);
     nvgFillColor(m_vg, nvgRGBA(255,192,0,255));
     nvgFill(m_vg);
+    nvgClosePath(m_vg);
+
+    nvgEndFrame(m_vg);
 
     // detach framebuffer
     m_framebuffer.unbind();
-
-    nvgEndFrame(m_vg);
   }
 
   // render image using custom shader (for grayscale) on drawlist associated with current frame
@@ -199,13 +205,15 @@ void Canvas::set_shader(const std::string& key) {
  * @param y_offset heights of menu & toolbar used to calculate cursor position rel. to image
  */
 void Canvas::render_image(float y_offset) {
+  // Error code = 502 (GL_INVALID_OPERATION) when used
   // render image using custom shader
-  use_shader();
+  // use_shader();
 
+  // render image & graphics drawn on texture attached to fbo
   // double casting avoids `warning: cast to pointer from integer of different size` i.e. smaller
   m_texture.attach();
   ImVec2 size_image = ImVec2(m_zoom * m_texture.width, m_zoom * m_texture.height);
-  // ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
+  ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
 
   // draw circle/line at mouse click position with Cairo (managed by listener)
   if (ImGui::IsItemClicked()) {
@@ -253,7 +261,7 @@ void Canvas::render_image(float y_offset) {
       ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
   }
 
-  unuse_shader();
+  // unuse_shader();
 }
 
 /* Define line's start point */

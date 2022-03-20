@@ -24,6 +24,7 @@ int main() {
   }
 
   // initialize window frame with imgui
+  // std::string path_image = "./assets/images/nature.jpg";
   std::string path_image = "./assets/images/nature.png";
   Frame frame(window, path_image);
 
