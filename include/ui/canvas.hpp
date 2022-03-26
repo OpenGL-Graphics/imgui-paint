@@ -84,7 +84,9 @@ private:
   void use_shader();
   void unuse_shader();
   void render_image(float y_offset);
+
   void draw_circle(float x, float y);
+  void draw_line(float x1, float y1, float x2, float y2);
 };
 
 #endif // CANVAS_HPP

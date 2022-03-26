@@ -187,7 +187,8 @@ void Canvas::render_image(float y_offset) {
       if (m_cursor.x == VECTOR_UNSET.x && m_cursor.y == VECTOR_UNSET.y) {
         move_cursor();
       } else {
-        // draw("line");
+        ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
+        draw_line(m_cursor.x, m_cursor.y, position_mouse_img.x, position_mouse_img.y);
 
         m_cursor = VECTOR_UNSET;
         Menu::draw_line = false;
@@ -235,7 +236,8 @@ void Canvas::draw_circle(float x, float y) {
   // draw rectangle & circle on fbo's texture
   nvgBeginPath(m_vg);
   nvgCircle(m_vg, x, y, 25);
-  nvgFillColor(m_vg, nvgRGBA(255,192,0,255));
+  NVGcolor color_fill = { Color::fill.x, Color::fill.y, Color::fill.z, 1.0f - Color::fill.w };
+  nvgFillColor(m_vg, color_fill);
   nvgFill(m_vg);
   nvgClosePath(m_vg);
 
@@ -245,10 +247,36 @@ void Canvas::draw_circle(float x, float y) {
   m_framebuffer.unbind();
 }
 
+/* Draw line with nanovg to fbo (i.e. to image texture) */
+void Canvas::draw_line(float x1, float y1, float x2, float y2) {
+  // append to framebuffer's attached color buffer
+  m_framebuffer.bind();
+
+  // same size `nvgBeginFrame()` as `glViewport()`/texture to avoid stretching drawn shapes
+  float pixel_ratio = 1.0f; // framebuffer (i.e. texture) & image have same size
+  nvgBeginFrame(m_vg, m_texture.width, m_texture.height, pixel_ratio);
+
+  // draw rectangle & circle on fbo's texture
+  nvgBeginPath(m_vg);
+  nvgMoveTo(m_vg, x1, y1);
+  nvgLineTo(m_vg, x2, y2);
+  NVGcolor color_stroke = { Color::stroke.x, Color::stroke.y, Color::stroke.z, 1.0f - Color::stroke.w };
+	nvgStrokeWidth(m_vg, 10.0f);
+	nvgStrokeColor(m_vg, color_stroke);
+	nvgStroke(m_vg);
+
+  nvgEndFrame(m_vg);
+
+  // detach framebuffer
+  m_framebuffer.unbind();
+}
+
 /* Define line's start point */
 void Canvas::move_cursor() {
+  // float y_offset = Size::menu.y + Size::toolbar.y;
+  // ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
   float y_offset = Size::menu.y + Size::toolbar.y;
-  ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
+  ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
   std::cout << "Line start point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
 
   m_cursor = position_mouse_img;
@@ -277,6 +305,7 @@ void Canvas::draw(const std::string& type_shape, bool has_strokes) {
     ImVec2 end_bbox( position_mouse_img.x + radius, position_mouse_img.y + radius );
     offset = start_bbox;
     size = { end_bbox.x - start_bbox.x + 1, end_bbox.y - start_bbox.y + 1 };
+
   } else if (type_shape == "line") {
     std::cout << "Line start point x: " << m_cursor.x << " y: " << m_cursor.y << '\n';
     std::cout << "Line end point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
