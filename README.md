@@ -18,11 +18,19 @@ $ git submodule update --init --recursive --remote
 - **ImGui:** used to render UI.
 - **NanoVG:** To draw on texture.
 
-## Not used anymore
-- **Cairo:** used to draw shapes on the image, and needs to be installed beforehand (see [this example][gist-cairo]).
-- **GDK:** used to convert edited Cairo image surface to pixel data before rendering (avoids costly writing to disk eachtime a shape is drawn).
+# TODOs
+- This [blog post][drawing-techniques] about implementing a brush tool on html5 canvas needs to be checked, because the brush tools still gives discontinuous lines/circles (maybe interpolate the path drawn by user).
+- Bug: Painting at bottom (after scrolling) of image doesn't draw at the right location (y-coord is wrong at bottom, check with tooltip)
 
-To install the needed dependencies on Ubuntu:
+[drawing-techniques]: http://perfectionkills.com/exploring-canvas-drawing-techniques/
+
+## Not used anymore
+Currently, shapes (lines & circles) are painted directly on the opengl texture (i.e. on the gpu) with NanoVG, so Cairo & GDK aren't needed anymore.
+
+- **Cairo:** used to be used draw shapes on the image, and needs to be installed beforehand (see [this example][gist-cairo]).
+- **GDK:** used to be used to convert edited Cairo image surface to pixel data before rendering (avoids costly writing to disk eachtime a shape is drawn).
+
+Both dependencies were installed on Ubuntu:
 
 ```console
 $ apt install libglfw3-dev libcairo2-dev libgtk-3-dev
@@ -34,11 +42,6 @@ $ apt install libglfw3-dev libcairo2-dev libgtk-3-dev
 This app was tested on the following drivers:
 - Opengl-3.0 & GLSL-1.30
 - Opengl-4.6 & GLSL-4.60
-
-# Inspiration
-- This [blog post][drawing-techniques] about implementing a brush tool on html5 canvas.
-
-[drawing-techniques]: http://perfectionkills.com/exploring-canvas-drawing-techniques/
 
 ---
 

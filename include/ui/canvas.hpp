@@ -65,13 +65,6 @@ private:
   TooltipImage m_tooltip_image;
   TooltipPixel m_tooltip_pixel;
 
-  /**
-   * Current cursor position (used to draw a line on image)
-   * `m_cursor` = (-1, -1) means it wasn't set yet
-   */
-  const ImVec2 VECTOR_UNSET = ImVec2(-1.0f, -1.0f);
-  ImVec2 m_cursor;
-
   /* static methods can be passed as function pointers callbacks (no `this` argument) */
   static void draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd);
 

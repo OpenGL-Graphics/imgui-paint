@@ -9,6 +9,7 @@
 
 #include "ui/globals/size.hpp"
 #include "ui/globals/color.hpp"
+#include "ui/globals/cursor.hpp"
 
 /* static members definition (avoids linking error) & initialization */
 bool Toolbar::open_image = false;
@@ -18,7 +19,8 @@ bool Toolbar::zoom_in = false;
 bool Toolbar::zoom_out = false;
 bool Toolbar::draw_circle = false;
 bool Toolbar::draw_line = false;
-bool Toolbar::brush = false;
+bool Toolbar::brush_circle = false;
+bool Toolbar::brush_line = false;
 
 // radio button (0: none, 1: image subset, 2: pixel value)
 int Toolbar::hover_mode = HoverMode::NONE;
@@ -113,13 +115,23 @@ void Toolbar::render() {
   ImGui::SameLine(0, 1); // offset=0: pos. right after previous item, spacing=1px
 
   // change color for toolbar button if in right mode
-  ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[Menu::brush ? ImGuiCol_ButtonActive : ImGuiCol_Button]);
+  ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[Menu::brush_circle ? ImGuiCol_ButtonActive : ImGuiCol_Button]);
   if (ImGui::Button(ICON_FA_PAINT_BRUSH, { 2*size_font, -1.0f }))
-    Toolbar::brush = Menu::brush = !Menu::brush;
+    Toolbar::brush_circle = Menu::brush_circle = !Menu::brush_circle;
   ImGui::PopStyleColor();
 
   if (ImGui::IsItemHovered())
-    ImGui::SetTooltip("Brush tool");
+    ImGui::SetTooltip("Circle brush tool");
+  ImGui::SameLine(0, 1); // offset=0: pos. right after previous item, spacing=1px
+
+  // change color for toolbar button if in right mode
+  ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[Menu::brush_line ? ImGuiCol_ButtonActive : ImGuiCol_Button]);
+  if (ImGui::Button(ICON_FA_PAINT_ROLLER, { 2*size_font, -1.0f }))
+    Toolbar::brush_line = Menu::brush_line = !Menu::brush_line;
+  ImGui::PopStyleColor();
+
+  if (ImGui::IsItemHovered())
+    ImGui::SetTooltip("Line brush tool");
   ImGui::SameLine(0, 1); // offset=0: pos. right after previous item, spacing=1px
 
   // radio buttons for what to show on image hover (imgui_demo.cpp:560)

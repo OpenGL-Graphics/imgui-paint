@@ -26,7 +26,8 @@ bool Menu::zoom_out = false;
 // menu Draw
 bool Menu::draw_circle = false;
 bool Menu::draw_line = false;
-bool Menu::brush = false;
+bool Menu::brush_circle = false;
+bool Menu::brush_line = false;
 
 Menu::Menu()
 {
@@ -77,8 +78,11 @@ void Menu::render() {
         Toolbar::draw_line = Menu::draw_line = true;
       ImGui::EndDisabled();
 
-      ImGui::MenuItem("Paint", NULL, &Menu::brush);
-      Toolbar::brush = Menu::brush;
+      ImGui::MenuItem("Brush circle", NULL, &Menu::brush_circle);
+      Toolbar::brush_circle = Menu::brush_circle;
+
+      ImGui::MenuItem("Brush line", NULL, &Menu::brush_line);
+      Toolbar::brush_line = Menu::brush_line;
 
       ImGui::EndMenu();
     }

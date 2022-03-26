@@ -11,7 +11,7 @@ struct Menu {
   static bool to_grayscale, blur; // menu Edit
   static bool view_color, view_grayscale, view_monochrome; // menu View
   static bool zoom_in, zoom_out; // menu Zoom
-  static bool draw_circle, draw_line, brush; // menu Draw
+  static bool draw_circle, draw_line, brush_circle, brush_line; // menu Draw
 
   Menu();
   void render();

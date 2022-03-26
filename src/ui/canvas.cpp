@@ -12,6 +12,7 @@
 
 #include "ui/globals/size.hpp"
 #include "ui/globals/color.hpp"
+#include "ui/globals/cursor.hpp"
 
 #include "image/image_utils.hpp"
 
@@ -41,10 +42,7 @@ Canvas::Canvas(const std::string path_image):
   m_program(&m_programs.at("color")),
   m_zoom(1.0f),
   m_tooltip_image(m_texture),
-  m_tooltip_pixel(m_image_vg.framebuffer),
-
-  // line's starting point not set yet
-  m_cursor(VECTOR_UNSET)
+  m_tooltip_pixel(m_image_vg.framebuffer)
 {
   // vertex or fragment shaders failed to compile
   if (m_program->has_failed()) {
@@ -170,28 +168,44 @@ void Canvas::render_image(float y_offset) {
 
     // two clicks needed to draw a line (cursor saved on 1st click & reset after 2nd)
     if (Toolbar::draw_line) {
-      if (m_cursor.x == VECTOR_UNSET.x && m_cursor.y == VECTOR_UNSET.y) {
+      if (cursor.x == VECTOR_UNSET.x && cursor.y == VECTOR_UNSET.y) {
         move_cursor();
       } else {
         ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
-        m_image_vg.draw_line(m_cursor.x, m_cursor.y, position_mouse_img.x, position_mouse_img.y);
+        m_image_vg.draw_line(cursor.x, cursor.y, position_mouse_img.x, position_mouse_img.y);
 
-        m_cursor = VECTOR_UNSET;
+        cursor = VECTOR_UNSET;
         Menu::draw_line = false;
         Toolbar::draw_line = false;
 
         ImGui::SetMouseCursor(ImGuiMouseCursor_Arrow);
       }
     }
+
+    // set starting point (initial click) for brush line
+    if (Toolbar::brush_line && cursor.x == VECTOR_UNSET.x && cursor.y == VECTOR_UNSET.y) {
+      move_cursor();
+    }
   }
 
   // brush tool paints while LMB dragged
   // https://github.com/ocornut/imgui/issues/493
   if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-    if (Toolbar::brush) {
+    if (Toolbar::brush_circle) {
       ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
       m_image_vg.draw_circle(position_mouse_img.x, position_mouse_img.y);
     }
+    else if (Toolbar::brush_line) {
+        ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
+        m_image_vg.draw_line(cursor.x, cursor.y, position_mouse_img.x, position_mouse_img.y);
+        move_cursor();
+    }
+  }
+
+  // unset cursor position when mouse released in brush line mode
+  if (ImGui::IsMouseReleased(ImGuiMouseButton_Left)) {
+    if (Toolbar::brush_line)
+      cursor = VECTOR_UNSET;
   }
 
   if (ImGui::IsItemHovered()) {
@@ -203,7 +217,7 @@ void Canvas::render_image(float y_offset) {
     }
 
     // change to hand cursor if hovering in drawing mode
-    if (Toolbar::draw_circle || Toolbar::draw_line || Toolbar::brush)
+    if (Toolbar::draw_circle || Toolbar::draw_line || Toolbar::brush_circle || Toolbar::brush_line)
       ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
   }
 
@@ -218,7 +232,7 @@ void Canvas::move_cursor() {
   ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
   std::cout << "Line start point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
 
-  m_cursor = position_mouse_img;
+  cursor = position_mouse_img;
 }
 
 /* Change image opened in canvas to given `path_image` */
