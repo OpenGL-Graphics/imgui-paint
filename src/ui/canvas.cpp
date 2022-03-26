@@ -213,7 +213,8 @@ void Canvas::render_image(float y_offset) {
     if (Toolbar::hover_mode == HoverMode::IMAGE_SUBSET) {
       m_tooltip_image.render(y_offset, m_zoom);
     } else if (Toolbar::hover_mode == HoverMode::PIXEL_VALUE) {
-      m_tooltip_pixel.render(y_offset);
+      float y_scroll = ImGui::GetScrollY();
+      m_tooltip_pixel.render(y_offset, y_scroll);
     }
 
     // change to hand cursor if hovering in drawing mode
@@ -230,7 +231,6 @@ void Canvas::move_cursor() {
   // ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
   float y_offset = Size::menu.y + Size::toolbar.y;
   ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
-  std::cout << "Line start point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
 
   cursor = position_mouse_img;
 }

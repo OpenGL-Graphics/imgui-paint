@@ -6,7 +6,7 @@
 class TooltipPixel {
 public:
   TooltipPixel(const Framebuffer& framebuffer);
-  void render(float y_offset);
+  void render(float y_offset, float y_scroll);
 private:
   Framebuffer m_framebuffer;
 };

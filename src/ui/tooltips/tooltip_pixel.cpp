@@ -14,12 +14,13 @@ TooltipPixel::TooltipPixel(const Framebuffer& framebuffer):
 /**
  * Render pixel value at cursor location
  * @param y_offset Height of menu & toolbar
+ * @param y_scroll Height of vertical scroll (bcoz imgui ignores it when given cursor's x,y)
  */
-void TooltipPixel::render(float y_offset) {
+void TooltipPixel::render(float y_offset, float y_scroll) {
     ImGui::BeginTooltip();
 
     // mouse cursor rel. to canvas's origin
-    ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
+    ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset }, y_scroll);
     ImGui::Text("x: %f, y: %f", position_mouse_img.x, position_mouse_img.y);
 
     // read pixel value at (x, y) from fbo
