@@ -2,6 +2,8 @@
 #include <iostream>
 #include <algorithm>
 
+#include "glad/glad.h"
+
 #include "ui/canvas.hpp"
 #include "ui/toolbar.hpp"
 #include "ui/menu.hpp"
@@ -261,9 +263,9 @@ void Canvas::draw_line(float x1, float y1, float x2, float y2) {
   nvgMoveTo(m_vg, x1, y1);
   nvgLineTo(m_vg, x2, y2);
   NVGcolor color_stroke = { Color::stroke.x, Color::stroke.y, Color::stroke.z, 1.0f - Color::stroke.w };
-	nvgStrokeWidth(m_vg, 10.0f);
-	nvgStrokeColor(m_vg, color_stroke);
-	nvgStroke(m_vg);
+  nvgStrokeWidth(m_vg, 10.0f);
+  nvgStrokeColor(m_vg, color_stroke);
+  nvgStroke(m_vg);
 
   nvgEndFrame(m_vg);
 
@@ -345,6 +347,12 @@ void Canvas::change_image(const std::string& path_image) {
 
 /* Save image opened in canvas to given `path_image` */
 void Canvas::save_image(const std::string& path_image) {
+  // modified image retrieved from opengl texture & free original one
+  unsigned char* data = m_texture.get_data();
+  m_image.free();
+  m_image.data = data;
+
+  // save image on disk
   m_image.save(path_image);
 }
 
