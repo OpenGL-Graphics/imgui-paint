@@ -24,8 +24,10 @@ int main() {
   }
 
   // initialize window frame with imgui
+  std::string path_image = "./assets/images/rap.jpg";
+  // std::string path_image = "./assets/images/samurai.jpg";
   // std::string path_image = "./assets/images/nature.jpg";
-  std::string path_image = "./assets/images/nature.png";
+  // std::string path_image = "./assets/images/nature.png";
   Frame frame(window, path_image);
 
   // main loop

@@ -49,3 +49,15 @@ ImVec2 ImGuiUtils::get_mouse_position(const ImVec2& offset) {
 
   return position_mouse_parent;
 }
+
+/**
+ * Nanovg sets the origin at lower-left corner
+ * Viewport set to size of texture
+ */
+ImVec2 ImGuiUtils::get_mouse_position_vg(int height_texture, int y_offset) {
+  ImGuiIO& io = ImGui::GetIO();
+  ImVec2 position_mouse = io.MousePos;
+  ImVec2 position_mouse_img = ImVec2(position_mouse.x, height_texture - (position_mouse.y - y_offset));
+
+  return position_mouse_img;
+}

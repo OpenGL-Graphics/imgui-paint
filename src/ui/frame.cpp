@@ -24,7 +24,7 @@ Frame::Frame(const Window& window, const std::string& path_image):
   // setup imgui context & glfw/opengl backends
   ImGui::CreateContext();
   ImGui_ImplGlfw_InitForOpenGL(m_window.w, true);
-  ImGui_ImplOpenGL3_Init("#version 130");
+  ImGui_ImplOpenGL3_Init(NULL);
 
   // load text & icon fonts
   Fonts::load();

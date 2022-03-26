@@ -11,7 +11,6 @@
 
 #include "tooltips/tooltip_image.hpp"
 #include "tooltips/tooltip_pixel.hpp"
-#include "image/image_vector.hpp"
 
 /**
  * Canvas where image is displayed
@@ -38,18 +37,16 @@ public:
   void draw(const std::string& type_shape, bool has_strokes=true);
 
 private:
-  /**
-   * opened image to process & image to draw on with Cairo
-   */
+  /* opengl texture for showing image & to paint on (attached to fbo) */
   Image m_image;
-  ImageVector m_image_vector;
-
-  /**
-   * opengl texture for showing image
-   * static bcos otherwise allocated on the stack & freed before `draw_with_custom_shader()` is called => segfault
-   * https://github.com/ocornut/imgui/issues/4770
-   */
   Texture2D m_texture;
+
+  /* nanovg context & image (encapsulates `m_texture`) */
+  NVGcontext* m_vg;
+  int m_image_vg;
+
+  /* framebuffer used to render image & shapes with nanovg on `m_texture` */
+  Framebuffer m_framebuffer;
 
   /* shaders programs to pick from accord. to effect applied to image */
   std::unordered_map<std::string, Program> m_programs;
@@ -59,10 +56,6 @@ private:
    * Using a reference would've changed map (m_programs) values when switching to grayscale/color
    */
   Program* m_program;
-
-  void use_shader();
-  void unuse_shader();
-  void render_image(float y_offset);
 
   /*
    * Holds texture & program to pass to `draw_with_custom_shader()`
@@ -88,12 +81,10 @@ private:
   /* static methods can be passed as function pointers callbacks (no `this` argument) */
   static void draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd);
 
-  /* framebuffer used to render image & shapes with nanovg on texture */
-  Framebuffer m_framebuffer;
-
-  /* nanovg context & image (opened image encapsulating opengl texture) */
-  NVGcontext* m_vg;
-  int m_image_vg;
+  void use_shader();
+  void unuse_shader();
+  void render_image(float y_offset);
+  void draw_circle(float x, float y);
 };
 
 #endif // CANVAS_HPP

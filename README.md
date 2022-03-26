@@ -16,6 +16,9 @@ $ git submodule update --init --recursive --remote
 
 # Dependencies
 - **ImGui:** used to render UI.
+- **NanoVG:** To draw on texture.
+
+## Not used anymore
 - **Cairo:** used to draw shapes on the image, and needs to be installed beforehand (see [this example][gist-cairo]).
 - **GDK:** used to convert edited Cairo image surface to pixel data before rendering (avoids costly writing to disk eachtime a shape is drawn).
 
@@ -31,6 +34,11 @@ $ apt install libglfw3-dev libcairo2-dev libgtk-3-dev
 This app was tested on the following drivers:
 - Opengl-3.0 & GLSL-1.30
 - Opengl-4.6 & GLSL-4.60
+
+# Inspiration
+- This [blog post][drawing-techniques] about implementing a brush tool on html5 canvas.
+
+[drawing-techniques]: http://perfectionkills.com/exploring-canvas-drawing-techniques/
 
 ---
 

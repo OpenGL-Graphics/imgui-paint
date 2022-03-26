@@ -1,5 +1,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <iostream>
+#include <algorithm>
 
 #include "ui/canvas.hpp"
 #include "ui/toolbar.hpp"
@@ -28,8 +29,8 @@ std::array<GLuint, 2> Canvas::callback_data;
  * TODO: remove `path_image` to start with an empty canvas
  */
 Canvas::Canvas(const std::string path_image):
-  m_image_vector(path_image),
   m_image(path_image, false),
+  m_texture(m_image),
 
   m_programs{
     {"color", Program("assets/shaders/basic.vert", "assets/shaders/color.frag")},
@@ -54,19 +55,11 @@ Canvas::Canvas(const std::string path_image):
   // create nanovg context (similar to html5 canvas')
   m_vg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_DEBUG);
 
-  // load image data with stb_image, create texture, copy image data to gpu texture, then free image data
-  // TODO: delete Canvas::m_image (redundant)
-  m_image_vg = nvgCreateImage(m_vg, path_image.c_str(), NVG_IMAGE_FLIPY);
+  // nanovg image from opengl texture
+  m_image_vg = nvglCreateImageFromHandleGL3(m_vg, m_texture.id, m_texture.width, m_texture.height, 0);
 
-  // empty texture (same size as openend image) to fill when drawing to framebuffer
-  int width, height;
-  nvgImageSize(m_vg, m_image_vg, &width, &height);
-  Image image_framebuffer(width, height, GL_RGBA, NULL);
-  m_texture = Texture2D(image_framebuffer);
-
-  // attach empty texture to framebuffer
+  // attach image texture to framebuffer
   m_framebuffer.attach_texture(m_texture);
-  std::cout << std::hex << "OpenGL Error: " << glGetError() << '\n';
 
   if (!m_framebuffer.is_complete()) {
     throw FramebufferException();
@@ -119,6 +112,10 @@ void Canvas::render() {
   float y_offset = Size::menu.y + Size::toolbar.y;
   Size::canvas = { size_display.x, size_display.y - y_offset };
 
+  // viewport of same size as texture
+  // `nvgBeginFrame()` defines size of drawing area in relation to `glViewport()`
+  glViewport(0, 0, m_texture.width, m_texture.height);
+
   // imgui window of specified size, anchored at (0, 0), & without padding, no dark background overlay
   // origin at upper-left corner
   ImGui::SetNextWindowPos({ 0.0f, y_offset });
@@ -128,47 +125,6 @@ void Canvas::render() {
   bool p_open;
   ImGuiWindowFlags window_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoBackground;
   ImGui::Begin("Canvas", &p_open, window_flags);
-
-  // draw vector shapes & image on fbo's texture with nanovg
-  // TODO: sometimes opengl throws: `glGetError 506` (incomplete fbo)
-  {
-    // clear framebuffer's attached color buffer in every frame
-    m_framebuffer.bind();
-    m_framebuffer.clear({ 0.0f, 0.0f, 0.0f, 1.0f });
-
-    float pixel_ratio = 1.0f; // framebuffer & window have same size
-    nvgBeginFrame(m_vg, Size::canvas.x, Size::canvas.y, pixel_ratio);
-
-    // origin at lower-left corner of image (2d projection)
-    // y is offset as otherwise image will stretch till top of window (behind menu)
-    // draw image on fbo's texture
-    float alpha = 1.0f;
-    float angle = 0.0f;
-    float x = 0.0f;
-    float y = 0.0f;
-    int width = m_texture.width;
-    int height = m_texture.height;
-    nvgImageSize(m_vg, m_image_vg, &width, &height);
-    NVGpaint imgPaint = nvgImagePattern(m_vg, x, y - y_offset, width, height - y_offset, angle, m_image_vg, alpha);
-    nvgBeginPath(m_vg);
-    nvgRect(m_vg, x, y, width, height);
-    nvgFillPaint(m_vg, imgPaint);
-    nvgFill(m_vg);
-    nvgClosePath(m_vg);
-
-    // draw rectangle & circle on fbo's texture
-    nvgBeginPath(m_vg);
-    // nvgRect(m_vg, 100,100, 120,30);
-    nvgCircle(m_vg, 100, 100, 25);
-    nvgFillColor(m_vg, nvgRGBA(255,192,0,255));
-    nvgFill(m_vg);
-    nvgClosePath(m_vg);
-
-    nvgEndFrame(m_vg);
-
-    // detach framebuffer
-    m_framebuffer.unbind();
-  }
 
   // render image using custom shader (for grayscale) on drawlist associated with current frame
   render_image(y_offset);
@@ -205,7 +161,7 @@ void Canvas::set_shader(const std::string& key) {
  * @param y_offset heights of menu & toolbar used to calculate cursor position rel. to image
  */
 void Canvas::render_image(float y_offset) {
-  // Error code = 502 (GL_INVALID_OPERATION) when used
+  // Error code = 502 (GL_INVALID_OPERATION) from imgui in frame.cpp after create frame
   // render image using custom shader
   // use_shader();
 
@@ -215,10 +171,11 @@ void Canvas::render_image(float y_offset) {
   ImVec2 size_image = ImVec2(m_zoom * m_texture.width, m_zoom * m_texture.height);
   ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
 
-  // draw circle/line at mouse click position with Cairo (managed by listener)
+  // draw circle/line at mouse click position
   if (ImGui::IsItemClicked()) {
     if (Toolbar::draw_circle) {
-      draw("circle");
+      ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
+      draw_circle(position_mouse_img.x, position_mouse_img.y);
       Menu::draw_circle = false;
       Toolbar::draw_circle = false;
 
@@ -230,7 +187,7 @@ void Canvas::render_image(float y_offset) {
       if (m_cursor.x == VECTOR_UNSET.x && m_cursor.y == VECTOR_UNSET.y) {
         move_cursor();
       } else {
-        draw("line");
+        // draw("line");
 
         m_cursor = VECTOR_UNSET;
         Menu::draw_line = false;
@@ -244,8 +201,10 @@ void Canvas::render_image(float y_offset) {
   // brush tool paints while LMB dragged
   // https://github.com/ocornut/imgui/issues/493
   if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
-    if (Toolbar::brush)
-      draw("circle", false);
+    if (Toolbar::brush) {
+      ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
+      draw_circle(position_mouse_img.x, position_mouse_img.y);
+    }
   }
 
   if (ImGui::IsItemHovered()) {
@@ -264,6 +223,28 @@ void Canvas::render_image(float y_offset) {
   // unuse_shader();
 }
 
+/* Draw circle with nanovg to fbo (i.e. to image texture) */
+void Canvas::draw_circle(float x, float y) {
+  // append to framebuffer's attached color buffer
+  m_framebuffer.bind();
+
+  // same size `nvgBeginFrame()` as `glViewport()`/texture to avoid stretching drawn shapes
+  float pixel_ratio = 1.0f; // framebuffer (i.e. texture) & image have same size
+  nvgBeginFrame(m_vg, m_texture.width, m_texture.height, pixel_ratio);
+
+  // draw rectangle & circle on fbo's texture
+  nvgBeginPath(m_vg);
+  nvgCircle(m_vg, x, y, 25);
+  nvgFillColor(m_vg, nvgRGBA(255,192,0,255));
+  nvgFill(m_vg);
+  nvgClosePath(m_vg);
+
+  nvgEndFrame(m_vg);
+
+  // detach framebuffer
+  m_framebuffer.unbind();
+}
+
 /* Define line's start point */
 void Canvas::move_cursor() {
   float y_offset = Size::menu.y + Size::toolbar.y;
@@ -279,6 +260,7 @@ void Canvas::move_cursor() {
  * - line starting from `m_cursor` (defined on 1st click in `move_cursor()`) to mouse 2nd click position
  * @param type_shape 'circle' or 'line'
  */
+/*
 void Canvas::draw(const std::string& type_shape, bool has_strokes) {
   float y_offset = Size::menu.y + Size::toolbar.y;
   ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
@@ -320,14 +302,14 @@ void Canvas::draw(const std::string& type_shape, bool has_strokes) {
   profiler.stop();
   // profiler.print("To GPU");
 }
+*/
 
 /* Change image opened in canvas to given `path_image` */
 void Canvas::change_image(const std::string& path_image) {
-  // free pixel data & cairo surface
+  // free pixel data
   m_image.free();
-  m_image_vector.free();
 
-  m_image_vector = ImageVector(path_image);
+  // replace image texture
   m_image = Image(path_image, false);
   m_texture.set_image(m_image);
 }
@@ -352,17 +334,15 @@ void Canvas::blur() {
 
 /* Free opengl texture (image holder) & shaders programs used to display it */
 void Canvas::free() {
-  m_image_vector.free();
-
   for (auto& pair: m_programs) {
     pair.second.free();
   }
 
-  // destroy framebuffer & texture attached to it
-  m_texture.free();
+  // destroy framebuffer
   m_framebuffer.free();
 
-  // delete image texture created by nanovg
+  // delete image & nanovg texure (which frees opengl texture)
+  m_image.free();
   nvgDeleteImage(m_vg, m_image_vg);
 
   // free nanovg context
