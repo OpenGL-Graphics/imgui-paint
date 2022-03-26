@@ -1,12 +1,12 @@
 #include "ui/imgui_utils.hpp"
 
 /**
- * Convert pixel value extracted from stb_image to a ImGui 4-channel vector
- * Transform pixel value into a 4-component vector in [0, 1]
+ * Convert pixel value extracted from fbo to a ImGui 4-channel vector
+ * Transform pixel value in [0, 255] into a 4-component vector in [0, 1]
  */
-ImVec4 ImGuiUtils::vector_to_imvec4(const std::vector<unsigned char>& pixel_value) {
+ImVec4 ImGuiUtils::arr_to_imvec4(unsigned char* pixel_value, int n_channels) {
   ImVec4 color;
-  switch (pixel_value.size()) {
+  switch (n_channels) {
     case 4: // rgba
       color = {
         pixel_value[0] / 255.0f,

@@ -2,8 +2,12 @@
 #include "ui/tooltips/tooltip_pixel.hpp"
 #include "ui/imgui_utils.hpp"
 
-TooltipPixel::TooltipPixel(const Image& image):
-  m_image(image)
+/**
+ * Get image pixel value directly from fbo
+ * bcoz user may paint on texture in the meantime
+ */
+TooltipPixel::TooltipPixel(const Framebuffer& framebuffer):
+  m_framebuffer(framebuffer)
 {
 }
 
@@ -18,13 +22,13 @@ void TooltipPixel::render(float y_offset) {
     ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
     ImGui::Text("x: %f, y: %f", position_mouse_img.x, position_mouse_img.y);
 
-    // get pixel value (image is a vector not a 2d array)
-    unsigned int i_pixel = position_mouse_img.y*m_image.width + position_mouse_img.x;
-    std::vector<unsigned char> pixel_value = m_image.get_pixel_value(i_pixel);
-    ImGui::Text("ipixel: %d", i_pixel);
+    // read pixel value at (x, y) from fbo
+    int n_channels = m_framebuffer.n_channels;
+    unsigned char pixel_value[n_channels];
+    m_framebuffer.get_pixel_value(position_mouse_img.x, position_mouse_img.y, pixel_value);
 
-    // transform pixel value into a 4-component vector in [0, 1]
-    ImVec4 color = ImGuiUtils::vector_to_imvec4(pixel_value);
+    // transform pixel value in [0, 255] into a 4-component vector in [0, 1]
+    ImVec4 color = ImGuiUtils::arr_to_imvec4(pixel_value, n_channels);
     ImGui::Text("color: %f, %f, %f, %f", color.x, color.y, color.z, color.w);
 
     // show button with pixel color under cursor

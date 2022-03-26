@@ -1,14 +1,14 @@
 #ifndef TOOLTIP_PIXEL_HPP
 #define TOOLTIP_PIXEL_HPP
 
-#include "image.hpp"
+#include "framebuffer.hpp"
 
 class TooltipPixel {
 public:
-  TooltipPixel(const Image& image);
+  TooltipPixel(const Framebuffer& framebuffer);
   void render(float y_offset);
 private:
-  Image m_image;
+  Framebuffer m_framebuffer;
 };
 
 #endif // TOOLTIP_PIXEL_HPP

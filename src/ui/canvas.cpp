@@ -19,9 +19,6 @@
 #include "framebuffer_exception.hpp"
 #include "profiling/profiler.hpp"
 
-#define NANOVG_GL3_IMPLEMENTATION
-#include "nanovg_gl.h"
-
 /* Static class members require a declaration in *.cpp (to allocate space for them) or be declared as `inline` in *.hpp */
 std::array<GLuint, 2> Canvas::callback_data;
 
@@ -31,8 +28,8 @@ std::array<GLuint, 2> Canvas::callback_data;
  * TODO: remove `path_image` to start with an empty canvas
  */
 Canvas::Canvas(const std::string path_image):
-  m_image(path_image, false),
-  m_texture(m_image),
+  m_texture(Image(path_image, false)),
+  m_image_vg(m_texture),
 
   m_programs{
     {"color", Program("assets/shaders/basic.vert", "assets/shaders/color.frag")},
@@ -44,7 +41,7 @@ Canvas::Canvas(const std::string path_image):
   m_program(&m_programs.at("color")),
   m_zoom(1.0f),
   m_tooltip_image(m_texture),
-  m_tooltip_pixel(m_image),
+  m_tooltip_pixel(m_image_vg.framebuffer),
 
   // line's starting point not set yet
   m_cursor(VECTOR_UNSET)
@@ -52,19 +49,6 @@ Canvas::Canvas(const std::string path_image):
   // vertex or fragment shaders failed to compile
   if (m_program->has_failed()) {
     throw ShaderException();
-  }
-
-  // create nanovg context (similar to html5 canvas')
-  m_vg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_DEBUG);
-
-  // nanovg image from opengl texture
-  m_image_vg = nvglCreateImageFromHandleGL3(m_vg, m_texture.id, m_texture.width, m_texture.height, 0);
-
-  // attach image texture to framebuffer
-  m_framebuffer.attach_texture(m_texture);
-
-  if (!m_framebuffer.is_complete()) {
-    throw FramebufferException();
   }
 }
 
@@ -177,7 +161,7 @@ void Canvas::render_image(float y_offset) {
   if (ImGui::IsItemClicked()) {
     if (Toolbar::draw_circle) {
       ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
-      draw_circle(position_mouse_img.x, position_mouse_img.y);
+      m_image_vg.draw_circle(position_mouse_img.x, position_mouse_img.y);
       Menu::draw_circle = false;
       Toolbar::draw_circle = false;
 
@@ -190,7 +174,7 @@ void Canvas::render_image(float y_offset) {
         move_cursor();
       } else {
         ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
-        draw_line(m_cursor.x, m_cursor.y, position_mouse_img.x, position_mouse_img.y);
+        m_image_vg.draw_line(m_cursor.x, m_cursor.y, position_mouse_img.x, position_mouse_img.y);
 
         m_cursor = VECTOR_UNSET;
         Menu::draw_line = false;
@@ -206,7 +190,7 @@ void Canvas::render_image(float y_offset) {
   if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
     if (Toolbar::brush) {
       ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
-      draw_circle(position_mouse_img.x, position_mouse_img.y);
+      m_image_vg.draw_circle(position_mouse_img.x, position_mouse_img.y);
     }
   }
 
@@ -226,53 +210,6 @@ void Canvas::render_image(float y_offset) {
   // unuse_shader();
 }
 
-/* Draw circle with nanovg to fbo (i.e. to image texture) */
-void Canvas::draw_circle(float x, float y) {
-  // append to framebuffer's attached color buffer
-  m_framebuffer.bind();
-
-  // same size `nvgBeginFrame()` as `glViewport()`/texture to avoid stretching drawn shapes
-  float pixel_ratio = 1.0f; // framebuffer (i.e. texture) & image have same size
-  nvgBeginFrame(m_vg, m_texture.width, m_texture.height, pixel_ratio);
-
-  // draw rectangle & circle on fbo's texture
-  nvgBeginPath(m_vg);
-  nvgCircle(m_vg, x, y, 25);
-  NVGcolor color_fill = { Color::fill.x, Color::fill.y, Color::fill.z, 1.0f - Color::fill.w };
-  nvgFillColor(m_vg, color_fill);
-  nvgFill(m_vg);
-  nvgClosePath(m_vg);
-
-  nvgEndFrame(m_vg);
-
-  // detach framebuffer
-  m_framebuffer.unbind();
-}
-
-/* Draw line with nanovg to fbo (i.e. to image texture) */
-void Canvas::draw_line(float x1, float y1, float x2, float y2) {
-  // append to framebuffer's attached color buffer
-  m_framebuffer.bind();
-
-  // same size `nvgBeginFrame()` as `glViewport()`/texture to avoid stretching drawn shapes
-  float pixel_ratio = 1.0f; // framebuffer (i.e. texture) & image have same size
-  nvgBeginFrame(m_vg, m_texture.width, m_texture.height, pixel_ratio);
-
-  // draw rectangle & circle on fbo's texture
-  nvgBeginPath(m_vg);
-  nvgMoveTo(m_vg, x1, y1);
-  nvgLineTo(m_vg, x2, y2);
-  NVGcolor color_stroke = { Color::stroke.x, Color::stroke.y, Color::stroke.z, 1.0f - Color::stroke.w };
-  nvgStrokeWidth(m_vg, 10.0f);
-  nvgStrokeColor(m_vg, color_stroke);
-  nvgStroke(m_vg);
-
-  nvgEndFrame(m_vg);
-
-  // detach framebuffer
-  m_framebuffer.unbind();
-}
-
 /* Define line's start point */
 void Canvas::move_cursor() {
   // float y_offset = Size::menu.y + Size::toolbar.y;
@@ -284,89 +221,36 @@ void Canvas::move_cursor() {
   m_cursor = position_mouse_img;
 }
 
-/**
- * Same function used to draw with Cairo a:
- * - circle at mouse cursor click position
- * - line starting from `m_cursor` (defined on 1st click in `move_cursor()`) to mouse 2nd click position
- * @param type_shape 'circle' or 'line'
- */
-/*
-void Canvas::draw(const std::string& type_shape, bool has_strokes) {
-  float y_offset = Size::menu.y + Size::toolbar.y;
-  ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
-  ImVec2 size, offset;
-
-  // draw line/circle with Cairo (instead of OpenCV => anti-aliased edges by default with vectors)
-  // TODO: Both line & circle strokes are cut at top-left bcos of Cairo (=> enlarge crop rectangle)
-  if (type_shape == "circle") {
-    float radius = 5.0f;
-    m_image_vector.draw_circle(position_mouse_img, radius, has_strokes);
-
-    // `+ 1` to include both extremities (see glTexSubImage2D() docs)
-    ImVec2 start_bbox( position_mouse_img.x - radius, position_mouse_img.y - radius );
-    ImVec2 end_bbox( position_mouse_img.x + radius, position_mouse_img.y + radius );
-    offset = start_bbox;
-    size = { end_bbox.x - start_bbox.x + 1, end_bbox.y - start_bbox.y + 1 };
-
-  } else if (type_shape == "line") {
-    std::cout << "Line start point x: " << m_cursor.x << " y: " << m_cursor.y << '\n';
-    std::cout << "Line end point x: " << position_mouse_img.x << " y: " << position_mouse_img.y << '\n';
-    m_image_vector.draw_line(m_cursor, position_mouse_img);
-
-    // `+ 1` to include both extremities (see glTexSubImage2D() docs)
-    offset = { m_cursor.x, m_cursor.y };
-    size = { position_mouse_img.x - m_cursor.x + 1, position_mouse_img.y - m_cursor.y + 1 };
-  }
-
-  // get updated subimage from converted cairo surface
-  Profiler profiler;
-  profiler.start();
-  unsigned char* subdata = m_image_vector.get_subdata(size, offset);
-  Image subimage(size.x, size.y, m_image.format, subdata, m_image.path);
-  profiler.stop();
-  // profiler.print("surface -> pixbuf -> char*");
-
-  // copy modified sub-image to gpu texture
-  profiler.start();
-  m_texture.set_subimage(subimage, { size.x, size.y }, { offset.x, offset.y });
-  m_image_vector.free_pixbuf(); // also frees image's `uchar *` data
-  profiler.stop();
-  // profiler.print("To GPU");
-}
-*/
-
 /* Change image opened in canvas to given `path_image` */
 void Canvas::change_image(const std::string& path_image) {
-  // free pixel data
-  m_image.free();
-
   // replace image texture
-  m_image = Image(path_image, false);
-  m_texture.set_image(m_image);
+  Image image_new = Image(path_image, false);
+  m_texture.set_image(image_new);
 }
 
 /* Save image opened in canvas to given `path_image` */
 void Canvas::save_image(const std::string& path_image) {
   // modified image retrieved from opengl texture & free original one
-  unsigned char* data = m_texture.get_data();
-  m_image.free();
-  m_image.data = data;
+  m_texture.get_image();
+  Image image = m_texture.image;
 
   // save image on disk
-  m_image.save(path_image);
+  image.save(path_image);
 }
 
 /* Convert image to grayscale and switch shader to monochrome */
 void Canvas::to_grayscale() {
-  m_image = ImageUtils::to_grayscale(m_image);
-  m_texture.set_image(m_image);
+  Image image_in = m_texture.image;
+  Image image_out = ImageUtils::to_grayscale(image_in);
+  m_texture.set_image(image_out);
   m_program = &m_programs.at("monochrome");
 }
 
 /* Blur image using a 9x9 avg. filter */
 void Canvas::blur() {
-  m_image = ImageUtils::blur(m_image);
-  m_texture.set_image(m_image);
+  Image image_in = m_texture.image;
+  Image image_out = ImageUtils::blur(image_in);
+  m_texture.set_image(image_out);
 }
 
 /* Free opengl texture (image holder) & shaders programs used to display it */
@@ -375,15 +259,11 @@ void Canvas::free() {
     pair.second.free();
   }
 
-  // destroy framebuffer
-  m_framebuffer.free();
+  // delete image & opengl texure
+  m_texture.free();
 
-  // delete image & nanovg texure (which frees opengl texture)
-  m_image.free();
-  nvgDeleteImage(m_vg, m_image_vg);
-
-  // free nanovg context
-  nvgDeleteGL3(m_vg);
+  // destroy framebuffer & nanovg context
+  m_image_vg.free();
 }
 
 void Canvas::zoom_in() {

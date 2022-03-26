@@ -4,13 +4,14 @@
 #include <string>
 
 #include "imgui.h"
-#include "nanovg.h"
 
 #include "framebuffer.hpp"
 #include "program.hpp"
 
 #include "tooltips/tooltip_image.hpp"
 #include "tooltips/tooltip_pixel.hpp"
+
+#include "image/image_vg.hpp"
 
 /**
  * Canvas where image is displayed
@@ -38,15 +39,8 @@ public:
 
 private:
   /* opengl texture for showing image & to paint on (attached to fbo) */
-  Image m_image;
   Texture2D m_texture;
-
-  /* nanovg context & image (encapsulates `m_texture`) */
-  NVGcontext* m_vg;
-  int m_image_vg;
-
-  /* framebuffer used to render image & shapes with nanovg on `m_texture` */
-  Framebuffer m_framebuffer;
+  ImageVG m_image_vg;
 
   /* shaders programs to pick from accord. to effect applied to image */
   std::unordered_map<std::string, Program> m_programs;
@@ -84,9 +78,6 @@ private:
   void use_shader();
   void unuse_shader();
   void render_image(float y_offset);
-
-  void draw_circle(float x, float y);
-  void draw_line(float x1, float y1, float x2, float y2);
 };
 
 #endif // CANVAS_HPP

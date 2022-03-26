@@ -10,11 +10,6 @@ set(CMAKE_BUILD_TYPE Release)
 # set(CMAKE_BUILD_TYPE Debug)
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=leak")
 
-# fill in Cairo/GDK headers & lib locations variable from /usr/lib/x86_64-linux-gnu/pkgconfig/{cairo.pc, gdk-3.0.pc}
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(CAIRO REQUIRED cairo)
-pkg_check_modules(GDK REQUIRED gdk-3.0)
-
 # copy assets folder
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 
@@ -56,17 +51,11 @@ file(GLOB SRC
   "src/main.cpp"
 )
 add_executable(main ${SRC})
-target_include_directories(main PRIVATE
-  ${CAIRO_INCLUDE_DIRS}
-  ${GDK_INCLUDE_DIRS}
-)
 target_link_libraries(main
   nanovg
   imgui
   file_dialog
   icon_font
-  ${CAIRO_LIBRARIES}
-  ${GDK_LIBRARIES}
 
   glfw_window
   opengl_utils
