@@ -50,7 +50,7 @@ void Frame::render() {
   // ImGui::ShowMetricsWindow();
 
   // show demo window (for imgui functionalities)
-  ImGui::ShowDemoWindow();
+  // ImGui::ShowDemoWindow();
 
   ImGui::Render();
   ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
