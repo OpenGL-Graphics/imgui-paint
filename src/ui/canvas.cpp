@@ -239,6 +239,7 @@ void Canvas::move_cursor() {
 void Canvas::change_image(const std::string& path_image) {
   // replace image texture
   Image image_new = Image(path_image, false);
+  m_texture.image.free();
   m_texture.set_image(image_new);
 }
 
@@ -256,6 +257,7 @@ void Canvas::save_image(const std::string& path_image) {
 void Canvas::to_grayscale() {
   Image image_in = m_texture.image;
   Image image_out = ImageUtils::to_grayscale(image_in);
+  m_texture.image.free();
   m_texture.set_image(image_out);
   m_program = &m_programs.at("monochrome");
 }
@@ -264,6 +266,7 @@ void Canvas::to_grayscale() {
 void Canvas::blur() {
   Image image_in = m_texture.image;
   Image image_out = ImageUtils::blur(image_in);
+  m_texture.image.free();
   m_texture.set_image(image_out);
 }
 

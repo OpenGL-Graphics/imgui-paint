@@ -4,8 +4,8 @@
 #include "image.hpp"
 
 namespace ImageUtils {
-  Image to_grayscale(const Image& image_in);
-  Image blur(const Image& image_in);
+  Image to_grayscale(Image& image_in);
+  Image blur(Image& image_in);
 };
 
 #endif // IMAGE_UTILS_HPP

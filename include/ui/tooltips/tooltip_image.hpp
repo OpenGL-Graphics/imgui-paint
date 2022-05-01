@@ -1,7 +1,7 @@
 #ifndef TOOLTIP_IMAGE_HPP
 #define TOOLTIP_IMAGE_HPP
 
-#include "texture.hpp"
+#include "texture_2d.hpp"
 
 class TooltipImage {
 public:

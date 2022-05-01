@@ -8,7 +8,7 @@
 #include "image/image_utils.hpp"
 
 /* Convert image to grayscale by averaging rgb components */
-Image ImageUtils::to_grayscale(const Image& image_in) {
+Image ImageUtils::to_grayscale(Image& image_in) {
   int n_channels = image_in.n_channels;
   std::cout << "n_channels: " << n_channels << '\n';
   int n_pixels = image_in.width * image_in.height;
@@ -26,14 +26,14 @@ Image ImageUtils::to_grayscale(const Image& image_in) {
   }
 
   // new image for result & free input image
-  Image image_out(image_in.width, image_in.height, GL_RED, data_out, image_in.path);
+  Image image_out(image_in.width, image_in.height, 1, data_out);
   image_in.free();
 
   return image_out;
 }
 
 /* Blur image using averaging filter */
-Image ImageUtils::blur(const Image& image_in) {
+Image ImageUtils::blur(Image& image_in) {
   int n_channels = image_in.n_channels;
   int width = image_in.width;
   int height = image_in.height;
