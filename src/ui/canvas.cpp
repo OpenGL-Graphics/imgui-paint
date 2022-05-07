@@ -19,9 +19,7 @@
 #include "shader_exception.hpp"
 #include "framebuffer_exception.hpp"
 #include "profiling/profiler.hpp"
-
-/* Static class members require a declaration in *.cpp (to allocate space for them) or be declared as `inline` in *.hpp */
-std::array<GLuint, 2> Canvas::callback_data;
+#include "geometries/surface_ndc.hpp"
 
 /**
  * Canvas showing image
@@ -29,60 +27,34 @@ std::array<GLuint, 2> Canvas::callback_data;
  * TODO: remove `path_image` to start with an empty canvas
  */
 Canvas::Canvas(const std::string path_image):
-  m_texture(Image(path_image, false)),
-  m_image_vg(m_texture),
-
-  m_programs{
-    {"color", Program("assets/shaders/basic.vert", "assets/shaders/color.frag")},
-    {"grayscale", Program("assets/shaders/basic.vert", "assets/shaders/grayscale.frag")},
-    {"monochrome", Program("assets/shaders/basic.vert", "assets/shaders/monochrome.frag")},
+  // `unordered_map::operator[]()` requires map's value (i.e. Program) to have default constructor
+  m_programs {
+    {"color", Program("assets/shaders/fbo.vert", "assets/shaders/color.frag")},
+    {"grayscale", Program("assets/shaders/fbo.vert", "assets/shaders/grayscale.frag")},
+    {"monochrome", Program("assets/shaders/fbo.vert", "assets/shaders/monochrome.frag")},
   },
 
-  // `unordered_map::operator[]()` requires map's value (i.e. Program) to have default constructor
-  m_program(&m_programs.at("color")),
+  m_texture_image(Image(path_image, false)),
+  m_texture_framebuffer(Image(m_texture_image.width, m_texture_image.height, m_texture_image.format, NULL)),
+
+  m_framebuffer(m_texture_framebuffer),
+  m_renderer(m_programs.at("color"), VBO(SurfaceNDC{}), {
+    {0, "position", 2, 4, 0},
+    {1, "texture_coord", 2, 4, 2}
+  }),
+
+  m_image_vg(m_framebuffer),
+
   m_zoom(1.0f),
-  m_tooltip_image(m_texture),
-  m_tooltip_pixel(m_image_vg.framebuffer)
+  m_tooltip_image(m_texture_framebuffer),
+  m_tooltip_pixel(m_framebuffer)
 {
-  // vertex or fragment shaders failed to compile
-  if (m_program->has_failed()) {
-    throw ShaderException();
+  // one of the vertex/fragment shaders failed to compile
+  for (auto& pair : m_programs) {
+    if (pair.second.has_failed()) {
+      throw ShaderException();
+    }
   }
-}
-
-/**
- * Change to custom shader (e.g. to show 1-channel image in grayscale)
- * Otherwise image will appear in shades of red by default
- * Shader & texture retrieved from static class member as pointer passed as 2nd arg to `ImDrawList->AddCallback()` allocated on stack (=>segfault)
- * => can only send one pointer
- * see: https://github.com/ocornut/imgui/issues/4174
- * @param draw_list Low-level list of polygons
- */
-void Canvas::draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd) {
-  // construct program/texture from their ids in static class member
-  Program program(callback_data[0]);
-  Texture2D texture(callback_data[1]);
-
-  // get current viewport size incl. menu (`GetDrawData()`: what to render)
-  ImDrawData* draw_data = ImGui::GetDrawData();
-  ImVec2 size_viewport = draw_data->DisplaySize;
-
-  // parameters to glm::ortho corresp. to screen bounds & position coords above are rel. to these bounds
-  // ortho mat inspired by: https://github.com/ocornut/imgui/blob/master/backends/imgui_impl_opengl2.cpp#L146
-  // originally viewport & image origins at lower-left corner, but bcos of ortho mat image will be inverted
-  // this ortho mat (with inv. bottom & top) allows image to stick to top-left corner of window
-  glm::mat4 projection2d = glm::ortho(0.0f, size_viewport.x, size_viewport.y, 0.0f); // left, right, bottom, top
-  glm::mat4 view(1.0f);
-  glm::mat4 model(1.0f); // position at window's origin (upper-left corner)
-  glm::mat4 transformation = projection2d * view * model;
-
-  // pass uniforms to shaders
-  Uniforms uniforms = {
-    {"transformation", transformation},
-    {"texture2d", texture}
-  };
-  program.use();
-  program.set_uniforms(uniforms);
 }
 
 /**
@@ -98,7 +70,7 @@ void Canvas::render() {
 
   // viewport of same size as texture
   // `nvgBeginFrame()` defines size of drawing area in relation to `glViewport()`
-  glViewport(0, 0, m_texture.width, m_texture.height);
+  glViewport(0, 0, m_texture_image.width, m_texture_image.height);
 
   // imgui window of specified size, anchored at (0, 0), & without padding, no dark background overlay
   // origin at upper-left corner
@@ -118,25 +90,23 @@ void Canvas::render() {
   ImGui::End();
 }
 
-/* Use custom shader (e.g. for grayscale) to render image on drawlist associated with current frame */
-void Canvas::use_shader() {
-  ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  callback_data = { m_program->id, m_texture.id };
-  draw_list->AddCallback(draw_with_custom_shader, nullptr);
-}
-
-/* Reset to default ImGui shader */
-void Canvas::unuse_shader() {
-  ImDrawList* draw_list = ImGui::GetWindowDrawList();
-  draw_list->AddCallback(ImDrawCallback_ResetRenderState, nullptr);
-}
-
 /**
  * Change to shader identified by its key
  * @param name Shader key in `m_programs`
  */
 void Canvas::set_shader(const std::string& key) {
-    m_program = &m_programs.at(key);
+  m_renderer.program = m_programs.at(key);
+}
+
+/* render image to framebuffer texture */
+void Canvas::render_to_fbo() {
+  // clear framebuffer's attached color buffer in every frame
+  m_framebuffer.bind();
+  m_framebuffer.clear({ 1.0f, 1.0f, 1.0f, 1.0f });
+
+  // draw 2d health bar HUD surface (scaling then translation with origin at lower left corner)
+  m_renderer.draw({ {"texture2d", m_texture_image} });
+  m_framebuffer.unbind();
 }
 
 /**
@@ -145,21 +115,17 @@ void Canvas::set_shader(const std::string& key) {
  * @param y_offset heights of menu & toolbar used to calculate cursor position rel. to image
  */
 void Canvas::render_image(float y_offset) {
-  // Edit 07-05-22: can't reproduce error below
-  // Error code = 502 (GL_INVALID_OPERATION) from imgui in frame.cpp after create frame
-  // render image using custom shader
-  use_shader();
-
   // render image & graphics drawn on texture attached to fbo
   // double casting avoids `warning: cast to pointer from integer of different size` i.e. smaller
-  m_texture.attach();
-  ImVec2 size_image = ImVec2(m_zoom * m_texture.width, m_zoom * m_texture.height);
-  ImGui::Image((void*)(intptr_t) m_texture.id, size_image);
+  render_to_fbo();
+  m_texture_framebuffer.attach();
+  ImVec2 size_image = ImVec2(m_zoom * m_texture_framebuffer.width, m_zoom * m_texture_framebuffer.height);
+  ImGui::Image((void*)(intptr_t) m_texture_framebuffer.id, size_image);
 
   // draw circle/line at mouse click position
   if (ImGui::IsItemClicked()) {
     if (Toolbar::draw_circle) {
-      ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
+      ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture_framebuffer.height, y_offset);
       m_image_vg.draw_circle(position_mouse_img.x, position_mouse_img.y);
       Menu::draw_circle = false;
       Toolbar::draw_circle = false;
@@ -172,7 +138,7 @@ void Canvas::render_image(float y_offset) {
       if (cursor.x == VECTOR_UNSET.x && cursor.y == VECTOR_UNSET.y) {
         move_cursor();
       } else {
-        ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
+        ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture_framebuffer.height, y_offset);
         m_image_vg.draw_line(cursor.x, cursor.y, position_mouse_img.x, position_mouse_img.y);
 
         cursor = VECTOR_UNSET;
@@ -193,11 +159,11 @@ void Canvas::render_image(float y_offset) {
   // https://github.com/ocornut/imgui/issues/493
   if (ImGui::IsMouseDragging(ImGuiMouseButton_Left)) {
     if (Toolbar::brush_circle) {
-      ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
+      ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture_framebuffer.height, y_offset);
       m_image_vg.draw_circle(position_mouse_img.x, position_mouse_img.y);
     }
     else if (Toolbar::brush_line) {
-        ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
+        ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture_framebuffer.height, y_offset);
         m_image_vg.draw_line(cursor.x, cursor.y, position_mouse_img.x, position_mouse_img.y);
         move_cursor();
     }
@@ -222,8 +188,6 @@ void Canvas::render_image(float y_offset) {
     if (Toolbar::draw_circle || Toolbar::draw_line || Toolbar::brush_circle || Toolbar::brush_line)
       ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
   }
-
-  unuse_shader();
 }
 
 /* Define line's start point */
@@ -231,7 +195,7 @@ void Canvas::move_cursor() {
   // float y_offset = Size::menu.y + Size::toolbar.y;
   // ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position({ 0.0f, y_offset });
   float y_offset = Size::menu.y + Size::toolbar.y;
-  ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture.height, y_offset);
+  ImVec2 position_mouse_img = ImGuiUtils::get_mouse_position_vg(m_texture_framebuffer.height, y_offset);
 
   cursor = position_mouse_img;
 }
@@ -240,33 +204,28 @@ void Canvas::move_cursor() {
 void Canvas::change_image(const std::string& path_image) {
   // replace image texture & reset shader
   Image image_new = Image(path_image, false);
-  m_texture.set_image(image_new);
-  m_program = &m_programs.at("color");
+  m_texture_image.set_image(image_new);
+  m_renderer.program = m_programs.at("color");
 }
 
 /* Save image opened in canvas to given `path_image` */
 void Canvas::save_image(const std::string& path_image) {
   // modified image retrieved from opengl texture (from gpu)
-  Image image = m_texture.get_image();
+  Image image = m_texture_framebuffer.get_image();
 
   // save image on disk & free pointer
   image.save(path_image);
   image.free();
 }
 
-/* Convert image to grayscale and switch shader to monochrome */
+/* Convert image to grayscale on gpu (through shader & fbo) */
 void Canvas::to_grayscale() {
-  // conversion on cpu (both in/out images freed in calling functions)
-  Image image_in = m_texture.get_image();
-  Image image_out = ImageUtils::to_grayscale(image_in);
-  m_texture.set_image(image_out);
-
-  m_program = &m_programs.at("monochrome");
+  m_renderer.program = m_programs.at("grayscale");
 }
 
 /* Blur image using a 9x9 avg. filter */
 void Canvas::blur() {
-  // m_program = &m_programs.at("blur");
+  m_renderer.program = m_programs.at("blur");
 }
 
 /* Free opengl texture (image holder) & shaders programs used to display it */
@@ -275,11 +234,18 @@ void Canvas::free() {
     pair.second.free();
   }
 
-  // delete image & opengl texure
-  m_texture.free();
+  // destroy buffers
+  m_renderer.free();
 
-  // destroy framebuffer & nanovg context
+  // destroy texures
+  m_texture_image.free();
+  m_texture_framebuffer.free();
+
+  // destroy nanovg context
   m_image_vg.free();
+
+  // destroy framebuffer
+  m_framebuffer.free();
 }
 
 void Canvas::zoom_in() {

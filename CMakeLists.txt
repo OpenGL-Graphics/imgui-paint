@@ -48,6 +48,7 @@ file(GLOB SRC
   "src/image/*.cpp"
   "src/fonts/*.cpp"
   "src/profiling/*.cpp"
+  "src/geometries/*.cpp"
   "src/main.cpp"
 )
 add_executable(main ${SRC})

@@ -3,6 +3,9 @@
 /**
  * modified from `imgui/imgui_impl_opengl3.cpp`
  * Display a single-channel (monochrome) image
+ *
+ * Custom shader to show image in grayscale (otherwise 1-channel image shows in shades of red)
+ * https://github.com/ocornut/imgui/issues/4748
  */
 in vec2 texture_coord_vert;
 

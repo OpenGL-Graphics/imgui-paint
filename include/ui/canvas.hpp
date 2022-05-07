@@ -7,17 +7,14 @@
 
 #include "framebuffer.hpp"
 #include "program.hpp"
+#include "render/renderer.hpp"
 
 #include "tooltips/tooltip_image.hpp"
 #include "tooltips/tooltip_pixel.hpp"
 
 #include "image/image_vg.hpp"
 
-/**
- * Canvas where image is displayed
- * Turned into a static class bcos static callback `draw_with_custom_shader()`'s data (texture & program) freed before it's called
- * https://github.com/ocornut/imgui/issues/4770
- */
+/* Canvas where image is displayed */
 class Canvas {
 public:
   Canvas(const std::string path_image);
@@ -38,26 +35,19 @@ public:
   void draw(const std::string& type_shape, bool has_strokes=true);
 
 private:
-  /* opengl texture for showing image & to paint on (attached to fbo) */
-  Texture2D m_texture;
-  ImageVG m_image_vg;
-
   /* shaders programs to pick from accord. to effect applied to image */
   std::unordered_map<std::string, Program> m_programs;
 
-  /* Custom shader to show image in grayscale (otherwise 1-channel image shows in shades of red)
-   * https://github.com/ocornut/imgui/issues/4748
-   * Using a reference would've changed map (m_programs) values when switching to grayscale/color
-   */
-  Program* m_program;
+  /* texture to pass to shader (original) & texture to render to with fbo (modified by shader or with shapes drawn with VG) */
+  Texture2D m_texture_image;
+  Texture2D m_texture_framebuffer;
 
-  /*
-   * Holds texture & program to pass to `draw_with_custom_shader()`
-   * static bcos if local variable, it's allocated on the stack & freed before `draw_with_custom_shader()` is called => segfault
-   * contains GLUints bcos std::tuple container couldn't be constructed (defined) without providing arguments to Program/Texture constructors
-   * https://github.com/ocornut/imgui/issues/4770
-   */
-  static std::array<GLuint, 2> callback_data;
+  /* framebuffer used to render image & shapes with nanovg on `m_texture_framebuffer` (used to read pixels in tooltip) */
+  Framebuffer m_framebuffer;
+  Renderer m_renderer;
+
+  /* for drawing shapes on texture (through fbo) using VG */
+  ImageVG m_image_vg;
 
   float m_zoom;
 
@@ -65,11 +55,7 @@ private:
   TooltipImage m_tooltip_image;
   TooltipPixel m_tooltip_pixel;
 
-  /* static methods can be passed as function pointers callbacks (no `this` argument) */
-  static void draw_with_custom_shader(const ImDrawList* parent_list, const ImDrawCmd* cmd);
-
-  void use_shader();
-  void unuse_shader();
+  void render_to_fbo();
   void render_image(float y_offset);
 };
 

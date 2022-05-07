@@ -6,28 +6,21 @@
 #define NANOVG_GL3_IMPLEMENTATION
 #include "nanovg_gl.h"
 
-ImageVG::ImageVG(const Texture2D& texture):
-  m_texture(texture)
+ImageVG::ImageVG(const Framebuffer& framebuffer):
+  m_framebuffer(framebuffer)
 {
   // create nanovg context (similar to html5 canvas)
   m_vg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_DEBUG);
-
-  // attach image texture to framebuffer
-  framebuffer.attach_texture(m_texture);
-
-  if (!framebuffer.is_complete()) {
-    throw FramebufferException();
-  }
 }
 
 /* Draw circle with nanovg to fbo (i.e. to image texture) */
 void ImageVG::draw_circle(float x, float y) {
   // append to framebuffer's attached color buffer
-  framebuffer.bind();
+  m_framebuffer.bind();
 
   // same size `nvgBeginFrame()` as `glViewport()`/texture to avoid stretching drawn shapes
   float pixel_ratio = 1.0f; // framebuffer (i.e. texture) & image have same size
-  nvgBeginFrame(m_vg, m_texture.width, m_texture.height, pixel_ratio);
+  nvgBeginFrame(m_vg, m_framebuffer.width, m_framebuffer.height, pixel_ratio);
 
   // draw rectangle & circle on fbo's texture
   nvgBeginPath(m_vg);
@@ -40,17 +33,17 @@ void ImageVG::draw_circle(float x, float y) {
   nvgEndFrame(m_vg);
 
   // detach framebuffer
-  framebuffer.unbind();
+  m_framebuffer.unbind();
 }
 
 /* Draw line with nanovg to fbo (i.e. to image texture) */
 void ImageVG::draw_line(float x1, float y1, float x2, float y2) {
   // append to framebuffer's attached color buffer
-  framebuffer.bind();
+  m_framebuffer.bind();
 
   // same size `nvgBeginFrame()` as `glViewport()`/texture to avoid stretching drawn shapes
   float pixel_ratio = 1.0f; // framebuffer (i.e. texture) & image have same size
-  nvgBeginFrame(m_vg, m_texture.width, m_texture.height, pixel_ratio);
+  nvgBeginFrame(m_vg, m_framebuffer.width, m_framebuffer.height, pixel_ratio);
 
   // draw rectangle & circle on fbo's texture
   nvgBeginPath(m_vg);
@@ -64,13 +57,10 @@ void ImageVG::draw_line(float x1, float y1, float x2, float y2) {
   nvgEndFrame(m_vg);
 
   // detach framebuffer
-  framebuffer.unbind();
+  m_framebuffer.unbind();
 }
 
 void ImageVG::free() {
-  // destroy framebuffer
-  framebuffer.free();
-
   // free nanovg context
   nvgDeleteGL3(m_vg);
 }
