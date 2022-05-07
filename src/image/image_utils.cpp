@@ -10,7 +10,6 @@
 /* Convert image to grayscale by averaging rgb components */
 Image ImageUtils::to_grayscale(Image& image_in) {
   int n_channels = image_in.n_channels;
-  std::cout << "n_channels: " << n_channels << '\n';
   int n_pixels = image_in.width * image_in.height;
   unsigned char* data_in = image_in.data;
   unsigned char* data_out = new unsigned char[n_pixels];

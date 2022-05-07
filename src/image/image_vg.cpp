@@ -9,7 +9,7 @@
 ImageVG::ImageVG(const Texture2D& texture):
   m_texture(texture)
 {
-  // create nanovg context (similar to html5 canvas')
+  // create nanovg context (similar to html5 canvas)
   m_vg = nvgCreateGL3(NVG_STENCIL_STROKES | NVG_DEBUG);
 
   // attach image texture to framebuffer

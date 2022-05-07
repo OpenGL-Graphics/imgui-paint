@@ -145,9 +145,10 @@ void Canvas::set_shader(const std::string& key) {
  * @param y_offset heights of menu & toolbar used to calculate cursor position rel. to image
  */
 void Canvas::render_image(float y_offset) {
+  // Edit 07-05-22: can't reproduce error below
   // Error code = 502 (GL_INVALID_OPERATION) from imgui in frame.cpp after create frame
   // render image using custom shader
-  // use_shader();
+  use_shader();
 
   // render image & graphics drawn on texture attached to fbo
   // double casting avoids `warning: cast to pointer from integer of different size` i.e. smaller
@@ -222,7 +223,7 @@ void Canvas::render_image(float y_offset) {
       ImGui::SetMouseCursor(ImGuiMouseCursor_Hand);
   }
 
-  // unuse_shader();
+  unuse_shader();
 }
 
 /* Define line's start point */
@@ -237,37 +238,35 @@ void Canvas::move_cursor() {
 
 /* Change image opened in canvas to given `path_image` */
 void Canvas::change_image(const std::string& path_image) {
-  // replace image texture
+  // replace image texture & reset shader
   Image image_new = Image(path_image, false);
-  m_texture.image.free();
   m_texture.set_image(image_new);
+  m_program = &m_programs.at("color");
 }
 
 /* Save image opened in canvas to given `path_image` */
 void Canvas::save_image(const std::string& path_image) {
-  // modified image retrieved from opengl texture & free original one
-  m_texture.get_image();
-  Image image = m_texture.image;
+  // modified image retrieved from opengl texture (from gpu)
+  Image image = m_texture.get_image();
 
-  // save image on disk
+  // save image on disk & free pointer
   image.save(path_image);
+  image.free();
 }
 
 /* Convert image to grayscale and switch shader to monochrome */
 void Canvas::to_grayscale() {
-  Image image_in = m_texture.image;
+  // conversion on cpu (both in/out images freed in calling functions)
+  Image image_in = m_texture.get_image();
   Image image_out = ImageUtils::to_grayscale(image_in);
-  m_texture.image.free();
   m_texture.set_image(image_out);
+
   m_program = &m_programs.at("monochrome");
 }
 
 /* Blur image using a 9x9 avg. filter */
 void Canvas::blur() {
-  Image image_in = m_texture.image;
-  Image image_out = ImageUtils::blur(image_in);
-  m_texture.image.free();
-  m_texture.set_image(image_out);
+  // m_program = &m_programs.at("blur");
 }
 
 /* Free opengl texture (image holder) & shaders programs used to display it */

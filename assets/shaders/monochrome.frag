@@ -13,5 +13,5 @@ out vec4 color_out;
 void main() {
   // imgui renders one-channel (grayscale) images in shades of red by default
   vec4 color = texture(texture2d, texture_coord_vert);
-  color_out = vec4(color.r);
+  color_out = vec4(color.r, color.r, color.r, 1);
 }
