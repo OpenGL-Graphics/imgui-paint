@@ -10,6 +10,7 @@
 #include "ui/globals/size.hpp"
 #include "ui/globals/color.hpp"
 #include "ui/globals/cursor.hpp"
+#include "ui/globals/mode.hpp"
 
 /* static members definition (avoids linking error) & initialization */
 bool Toolbar::open_image = false;
@@ -96,8 +97,10 @@ void Toolbar::render() {
 
   // toolbar button disabled if already in right mode (https://github.com/ocornut/imgui/issues/5011)
   ImGui::BeginDisabled(Toolbar::draw_circle);
-  if (ImGui::Button(ICON_FA_CIRCLE, { 2*size_font, -1.0f }))
+  if (ImGui::Button(ICON_FA_CIRCLE, { 2*size_font, -1.0f })) {
     Toolbar::draw_circle = Menu::draw_circle = true;
+    mode = (mode == Mode::NORMAL) ? Mode::DRAWING : Mode::NORMAL;
+  }
   ImGui::EndDisabled();
 
   if (ImGui::IsItemHovered())
@@ -106,8 +109,10 @@ void Toolbar::render() {
 
   // toolbar button disabled if already in right mode (https://github.com/ocornut/imgui/issues/5011)
   ImGui::BeginDisabled(Toolbar::draw_line);
-  if (ImGui::Button(ICON_FA_PEN, { 2*size_font, -1.0f }))
+  if (ImGui::Button(ICON_FA_PEN, { 2*size_font, -1.0f })) {
     Toolbar::draw_line = Menu::draw_line = true;
+    mode = (mode == Mode::NORMAL) ? Mode::DRAWING : Mode::NORMAL;
+  }
   ImGui::EndDisabled();
 
   if (ImGui::IsItemHovered())
@@ -116,8 +121,10 @@ void Toolbar::render() {
 
   // change color for toolbar button if in right mode
   ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[Menu::brush_circle ? ImGuiCol_ButtonActive : ImGuiCol_Button]);
-  if (ImGui::Button(ICON_FA_PAINT_BRUSH, { 2*size_font, -1.0f }))
+  if (ImGui::Button(ICON_FA_PAINT_BRUSH, { 2*size_font, -1.0f })) {
     Toolbar::brush_circle = Menu::brush_circle = !Menu::brush_circle;
+    mode = (mode == Mode::NORMAL) ? Mode::DRAWING : Mode::NORMAL;
+  }
   ImGui::PopStyleColor();
 
   if (ImGui::IsItemHovered())
@@ -126,8 +133,10 @@ void Toolbar::render() {
 
   // change color for toolbar button if in right mode
   ImGui::PushStyleColor(ImGuiCol_Button, style.Colors[Menu::brush_line ? ImGuiCol_ButtonActive : ImGuiCol_Button]);
-  if (ImGui::Button(ICON_FA_PAINT_ROLLER, { 2*size_font, -1.0f }))
+  if (ImGui::Button(ICON_FA_PAINT_ROLLER, { 2*size_font, -1.0f })) {
     Toolbar::brush_line = Menu::brush_line = !Menu::brush_line;
+    mode = (mode == Mode::NORMAL) ? Mode::DRAWING : Mode::NORMAL;
+  }
   ImGui::PopStyleColor();
 
   if (ImGui::IsItemHovered())

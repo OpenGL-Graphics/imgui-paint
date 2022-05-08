@@ -38,13 +38,32 @@ private:
   /* shaders programs to pick from accord. to effect applied to image */
   std::unordered_map<std::string, Program> m_programs;
 
-  /* texture to pass to shader (original) & texture to render to with fbo (modified by shader or with shapes drawn with VG) */
-  Texture2D m_texture_image;
-  Texture2D m_texture_framebuffer;
+  /**
+   * In Normal mode: texture to pass to shader drawing surface geometry
+   * In Draw shapes mode: Texture attached to fbo
+   * Initially: contains image
+   */
+  Texture2D m_texture_shapes;
 
-  /* framebuffer used to render image & shapes with nanovg on `m_texture_framebuffer` (used to read pixels in tooltip) */
+  /**
+   * In Normal mode: Texture attached to fbo (to render surface geometry to)
+   * In Draw shapes mode: unused
+   * Initially: empty (cleared in each frame)
+   */
+  Texture2D m_texture_effects;
+
+  /**
+   * Framebuffer used to:
+   * - Render image accord. to shader used (`m_texture_effects` attached) - e.g. in grayscale
+   * - Draw shapes with nanovg (`m_texture_shapes` attached)
+   * - To read pixels values in tooltip
+   */
   Framebuffer m_framebuffer;
   Renderer m_renderer;
+
+  /* Needed to work out mouse location rel. to image */
+  int m_width;
+  int m_height;
 
   /* for drawing shapes on texture (through fbo) using VG */
   ImageVG m_image_vg;
