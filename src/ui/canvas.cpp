@@ -35,6 +35,7 @@ Canvas::Canvas(const std::string path_image):
     {"color", Program("assets/shaders/fbo.vert", "assets/shaders/color.frag")},
     {"grayscale", Program("assets/shaders/fbo.vert", "assets/shaders/grayscale.frag")},
     {"monochrome", Program("assets/shaders/fbo.vert", "assets/shaders/monochrome.frag")},
+    {"blur", Program("assets/shaders/fbo.vert", "assets/shaders/blur.frag")},
   },
 
   m_texture_shapes(Image(path_image, false)),
