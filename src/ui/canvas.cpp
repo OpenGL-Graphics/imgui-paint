@@ -45,7 +45,7 @@ Canvas::Canvas(const std::string path_image):
   m_height(m_texture_shapes.height),
 
   m_framebuffer(),
-  m_renderer(m_programs.at("color"), VBO(SurfaceNDC{}), {
+  m_renderer(m_programs.at("color"), SurfaceNDC(), {
     {0, "position", 2, 4, 0},
     {1, "texture_coord", 2, 4, 2}
   }),
